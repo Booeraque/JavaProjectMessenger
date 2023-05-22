@@ -6,7 +6,8 @@ import java.awt.event.ActionListener;
 
 /*
 1. Узнать по поводу детализации с лейблами каждого элемента в объекте
-2. Растянуть врд обьекты по всей площади врд лейбла.
+2. Узнать правильно ли я создал панели и нормальное ли их количество
+3. Узнать нормально ли что нету скролл пейна в бсц и бтс панелях
  */
 
 public class SMSApp extends JFrame implements ActionListener {
@@ -18,18 +19,18 @@ public class SMSApp extends JFrame implements ActionListener {
     private final JButton addVRDButton = new JButton("     Add VRD     ");
     private final JButton addBSCButton = new JButton("Add BSC Station");
     private final JButton addBTSButton = new JButton("Add BTS Station");
-    private final JPanel vbdPanel; // Declare vbdPanel as an instance variable
+    private final JPanel vbdPanel;
     private final JPanel vrdPanel;
     private final JPanel btsPanel;
-    private final JPanel bscLayerPanel;
+    private final JPanel bscPanel;
 
     SMSApp() {
-        // Set the properties of the frame (size, visibility, etc.)
+        // Properties of my main frame
         setSize(1200, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("Messenger project");
 
-        // Create the three panels
+        // My three main panels that will contain everything
         sendingPanel = new JPanel();
         sendingPanel.setLayout(new BorderLayout());
 
@@ -40,21 +41,21 @@ public class SMSApp extends JFrame implements ActionListener {
         middlePanel.setLayout(new BorderLayout());
         middlePanel.setPreferredSize(new Dimension(300, 600));
 
-        // Create a panel to hold the BTS and BSC layers horizontally EEEE
-        JPanel layersPanel = new JPanel();
-        layersPanel.setLayout(new BoxLayout(layersPanel, BoxLayout.X_AXIS));
+        // Create a panel to hold the BTS and BSC stations
+        JPanel stationsPanel = new JPanel();
+        stationsPanel.setLayout(new BoxLayout(stationsPanel, BoxLayout.X_AXIS));
 
-        // Create a panel for the BTS layer
+        // Create a panel for the BTS stations
         btsPanel = new JPanel();
         btsPanel.setLayout(new BoxLayout(btsPanel, BoxLayout.Y_AXIS));
 
-        // Create a panel for the BSC layer
-        bscLayerPanel = new JPanel();
-        bscLayerPanel.setLayout(new BoxLayout(bscLayerPanel, BoxLayout.Y_AXIS));
+        // Create a panel for the BSC stations
+        bscPanel = new JPanel();
+        bscPanel.setLayout(new BoxLayout(bscPanel, BoxLayout.Y_AXIS));
 
-        // Add the BTS and BSC layers to the layersPanel
-        layersPanel.add(btsPanel);
-        layersPanel.add(bscLayerPanel);
+        // Add the BTS and BSC layers to the stationsPanel
+        stationsPanel.add(btsPanel);
+        stationsPanel.add(bscPanel);
 
         // Create a button for adding BSC layers
         addBSCButton.addActionListener(this);
@@ -66,8 +67,8 @@ public class SMSApp extends JFrame implements ActionListener {
         buttonPanel.add(addBSCButton);
         buttonPanel.add(addBTSButton);
 
-        // Add the layersPanel and buttonPanel to the middlePanel EEEEE
-        middlePanel.add(layersPanel, BorderLayout.CENTER);
+        // Add the stationsPanel and buttonPanel to the middlePanel
+        middlePanel.add(stationsPanel, BorderLayout.CENTER);
         middlePanel.add(buttonPanel, BorderLayout.SOUTH);
 
         // Create the JPanel for virtual sending devices (VBD)
@@ -215,7 +216,7 @@ public class SMSApp extends JFrame implements ActionListener {
             // Create a button for removing BSC stations
             JButton removeBSCButton = new JButton("Terminate");
             removeBSCButton.addActionListener(whenTerminateBSCButtonClicked -> {
-                    bscLayerPanel.remove(bscObjectPanel);
+                    bscPanel.remove(bscObjectPanel);
                     middlePanel.revalidate();
                     middlePanel.repaint();
             });
@@ -225,7 +226,7 @@ public class SMSApp extends JFrame implements ActionListener {
             bscObjectPanel.add(removeBSCButton);
 
             // Add the BSC station to the bscLayerPanel
-            bscLayerPanel.add(bscObjectPanel);
+            bscPanel.add(bscObjectPanel);
 
             // Repaint and revalidate the middlePanel
             middlePanel.revalidate();
