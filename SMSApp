@@ -5,6 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /*
+use interfaces or events to divide the visual and the logic part
+Horseman Javacore userinterfaces - book to understand that
 1. Узнать по поводу детализации с лейблами каждого элемента в объекте
 2. Узнать правильно ли я создал панели и нормальное ли их количество
 3. Узнать нормально ли что нету скролл пейна в бсц и бтс панелях
@@ -18,10 +20,10 @@ public class SMSApp extends JFrame implements ActionListener {
     private final JButton addVBDButton = new JButton("     Add VBD     ");
     private final JButton addVRDButton = new JButton("     Add VRD     ");
     private final JButton addBSCButton = new JButton("Add BSC Station");
-    private final JButton addBTSButton = new JButton("Add BTS Station");
     private final JPanel vbdPanel;
     private final JPanel vrdPanel;
-    private final JPanel btsPanel;
+    private final JPanel btsLeftLayer;
+    private final JPanel btsRightLayer;
     private final JPanel bscPanel;
 
     SMSApp() {
@@ -46,26 +48,29 @@ public class SMSApp extends JFrame implements ActionListener {
         stationsPanel.setLayout(new BoxLayout(stationsPanel, BoxLayout.X_AXIS));
 
         // Create a panel for the BTS stations
-        btsPanel = new JPanel();
-        btsPanel.setLayout(new BoxLayout(btsPanel, BoxLayout.Y_AXIS));
+        btsLeftLayer = BTS.getBTSLayer();
+        btsRightLayer = BTS.getBTSLayer();
+        btsLeftLayer.setLayout(new BoxLayout(btsLeftLayer, BoxLayout.Y_AXIS));
+        btsRightLayer.setLayout(new BoxLayout(btsRightLayer, BoxLayout.Y_AXIS));
 
         // Create a panel for the BSC stations
         bscPanel = new JPanel();
         bscPanel.setLayout(new BoxLayout(bscPanel, BoxLayout.Y_AXIS));
 
         // Add the BTS and BSC layers to the stationsPanel
-        stationsPanel.add(btsPanel);
+        stationsPanel.add(btsLeftLayer, BorderLayout.WEST);
+        stationsPanel.add(btsRightLayer, BorderLayout.EAST);
+
         stationsPanel.add(bscPanel);
 
         // Create a button for adding BSC layers
         addBSCButton.addActionListener(this);
-        addBTSButton.addActionListener(this);
 
         // Create a panel to hold the buttons
         JPanel buttonPanel = new JPanel();
+        buttonPanel.setBorder(new LineBorder(Color.DARK_GRAY, 3));
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(addBSCButton);
-        buttonPanel.add(addBTSButton);
 
         // Add the stationsPanel and buttonPanel to the middlePanel
         middlePanel.add(stationsPanel, BorderLayout.CENTER);
@@ -208,7 +213,7 @@ public class SMSApp extends JFrame implements ActionListener {
 
         if (whenAddButtonClicked.getSource() == addBSCButton) {
             // Create a new BSC Station
-            Station bsc = new Station();
+            BSC bsc = new BSC();
             JPanel bscObjectPanel = new JPanel();
             bscObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 3));
             JLabel bscStationNumberLabel = new JLabel("BSC Station #" + bsc.getStationNumber());
@@ -216,9 +221,9 @@ public class SMSApp extends JFrame implements ActionListener {
             // Create a button for removing BSC stations
             JButton removeBSCButton = new JButton("Terminate");
             removeBSCButton.addActionListener(whenTerminateBSCButtonClicked -> {
-                    bscPanel.remove(bscObjectPanel);
-                    middlePanel.revalidate();
-                    middlePanel.repaint();
+                bscPanel.remove(bscObjectPanel);
+                middlePanel.revalidate();
+                middlePanel.repaint();
             });
 
             // Add the BSC components to the bscObjectPanel
@@ -227,33 +232,6 @@ public class SMSApp extends JFrame implements ActionListener {
 
             // Add the BSC station to the bscLayerPanel
             bscPanel.add(bscObjectPanel);
-
-            // Repaint and revalidate the middlePanel
-            middlePanel.revalidate();
-            middlePanel.repaint();
-        }
-
-        if (whenAddButtonClicked.getSource() == addBTSButton) {
-            // Create a new BTS station
-            Station bts = new Station();
-            JPanel btsObjectPanel = new JPanel();
-            btsObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 3));
-            JLabel btsStationNumberLabel = new JLabel("BTS Station #" + bts.getStationNumber());
-
-            // Create a button for removing BSC stations
-            JButton removeBTSButton = new JButton("Terminate");
-            removeBTSButton.addActionListener(whenTerminateBTSButtonClicked -> {
-                    btsPanel.remove(btsObjectPanel);
-                    middlePanel.revalidate();
-                    middlePanel.repaint();
-            });
-
-            // Add the BTS components to the btsObjectPanel
-            btsObjectPanel.add(btsStationNumberLabel);
-            btsObjectPanel.add(removeBTSButton);
-
-            // Add the BSC station to the bscLayerPanel
-            btsPanel.add(btsObjectPanel);
 
             // Repaint and revalidate the middlePanel
             middlePanel.revalidate();
