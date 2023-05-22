@@ -1,0 +1,18 @@
+public class Station {
+    private final int stationID;
+    private static int stationCounter = 0;
+
+    public Station() {
+        stationID = generateUniqueStationID();
+    }
+
+    public int generateUniqueStationID() {
+        stationCounter++;
+        return stationCounter;
+    }
+
+    public int getStationNumber(){
+        return stationID;
+    }
+
+}
