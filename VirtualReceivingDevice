@@ -1,0 +1,12 @@
+public class VirtualReceivingDevice {
+
+    private int msgReceived;
+
+    VirtualReceivingDevice() {
+        msgReceived = 0;
+    }
+
+    public int getReceivedMessagesCounter() {
+        return msgReceived;
+    }
+}
