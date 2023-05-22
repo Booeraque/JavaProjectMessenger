@@ -1,0 +1,262 @@
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+/*
+1. Узнать по поводу детализации с лейблами каждого элемента в объекте
+2. Растянуть врд обьекты по всей площади врд лейбла.
+ */
+
+public class SMSApp extends JFrame implements ActionListener {
+
+    private final JPanel sendingPanel;
+    private final JPanel receivingPanel;
+    private final JPanel middlePanel;
+    private final JButton addVBDButton = new JButton("     Add VBD     ");
+    private final JButton addVRDButton = new JButton("     Add VRD     ");
+    private final JButton addBSCButton = new JButton("Add BSC Station");
+    private final JButton addBTSButton = new JButton("Add BTS Station");
+    private final JPanel vbdPanel; // Declare vbdPanel as an instance variable
+    private final JPanel vrdPanel;
+    private final JPanel btsPanel;
+    private final JPanel bscLayerPanel;
+
+    SMSApp() {
+        // Set the properties of the frame (size, visibility, etc.)
+        setSize(1200, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("Messenger project");
+
+        // Create the three panels
+        sendingPanel = new JPanel();
+        sendingPanel.setLayout(new BorderLayout());
+
+        receivingPanel = new JPanel();
+        receivingPanel.setLayout(new BorderLayout());
+
+        middlePanel = new JPanel();
+        middlePanel.setLayout(new BorderLayout());
+        middlePanel.setPreferredSize(new Dimension(300, 600));
+
+        // Create a panel to hold the BTS and BSC layers horizontally EEEE
+        JPanel layersPanel = new JPanel();
+        layersPanel.setLayout(new BoxLayout(layersPanel, BoxLayout.X_AXIS));
+
+        // Create a panel for the BTS layer
+        btsPanel = new JPanel();
+        btsPanel.setLayout(new BoxLayout(btsPanel, BoxLayout.Y_AXIS));
+
+        // Create a panel for the BSC layer
+        bscLayerPanel = new JPanel();
+        bscLayerPanel.setLayout(new BoxLayout(bscLayerPanel, BoxLayout.Y_AXIS));
+
+        // Add the BTS and BSC layers to the layersPanel
+        layersPanel.add(btsPanel);
+        layersPanel.add(bscLayerPanel);
+
+        // Create a button for adding BSC layers
+        addBSCButton.addActionListener(this);
+        addBTSButton.addActionListener(this);
+
+        // Create a panel to hold the buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.add(addBSCButton);
+        buttonPanel.add(addBTSButton);
+
+        // Add the layersPanel and buttonPanel to the middlePanel EEEEE
+        middlePanel.add(layersPanel, BorderLayout.CENTER);
+        middlePanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Create the JPanel for virtual sending devices (VBD)
+        vbdPanel = new JPanel();
+        vbdPanel.setLayout(new BoxLayout(vbdPanel, BoxLayout.Y_AXIS));
+
+        // Create the JScrollPane for the VBD panel
+        JScrollPane vbdScrollPane = new JScrollPane(vbdPanel);
+        vbdScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+        // Add the scroll pane to the central part of the sendingPanel
+        sendingPanel.add(vbdScrollPane, BorderLayout.CENTER);
+
+        // Create the JPanel for VRD
+        vrdPanel = new JPanel();
+        vrdPanel.setLayout(new BoxLayout(vrdPanel, BoxLayout.Y_AXIS));
+
+        // Create the JScrollPane for the VRD panel
+        JScrollPane vrdScrollPane = new JScrollPane(vrdPanel);
+        vrdScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+        // Add the scroll pane to the central part of the receivingPanel
+        receivingPanel.add(vrdScrollPane, BorderLayout.CENTER);
+
+        // Create the "Add" VBD button
+        addVBDButton.setFocusable(false);
+        addVBDButton.setBackground(Color.LIGHT_GRAY);
+        addVBDButton.addActionListener(this);
+
+        // Create the "Add" VRD button
+        addVRDButton.setFocusable(false);
+        addVRDButton.setBackground(Color.LIGHT_GRAY);
+        addVRDButton.addActionListener(this);
+
+        // Add the button to the bottom of the panels
+        sendingPanel.add(addVBDButton, BorderLayout.SOUTH);
+        receivingPanel.add(addVRDButton, BorderLayout.SOUTH);
+
+
+        // Set the layout for the main frame
+        setLayout(new BorderLayout());
+
+        // Add the panels to the main frame
+        add(sendingPanel, BorderLayout.WEST);
+        add(receivingPanel, BorderLayout.EAST);
+        add(middlePanel, BorderLayout.CENTER);
+    }
+
+    public static void main(String[] args) {
+        new SMSApp().setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent whenAddButtonClicked) {
+        if (whenAddButtonClicked.getSource() == addVBDButton) {
+            // Display dialog box for entering and confirming a short text message
+            String message = JOptionPane.showInputDialog(this, "Enter a short text message:");
+
+            if (message != null && !message.isEmpty()) {
+                // Creation of a new VBD object after clicking the Add button in the sending panel
+                VirtualSendingDevice vbd = new VirtualSendingDevice(message);
+                JPanel vbdObjectPanel = new JPanel();
+                vbdObjectPanel.setLayout(new BoxLayout(vbdObjectPanel, BoxLayout.Y_AXIS));
+                vbdObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 3));
+
+                // Frequency slider
+                JSlider frequencySlider = new JSlider(JSlider.HORIZONTAL, 1, 3, 2);
+                frequencySlider.setMajorTickSpacing(1);
+                frequencySlider.setPaintTicks(true);
+                frequencySlider.setPaintLabels(true);
+
+                // Device number TextField
+                JTextField deviceNumberField = new JTextField(vbd.getDeviceNumber());
+                deviceNumberField.setEditable(false);
+
+                // State combobox
+                JComboBox<String> stateComboBox = new JComboBox<>(new String[]{"WAITING", "ACTIVE"});
+
+                // Terminate VBD button
+                JButton terminateVBDButton = new JButton("Terminate");
+                terminateVBDButton.addActionListener(whenTerminateButtonClicked -> {
+                    vbdPanel.remove(vbdObjectPanel);
+                    sendingPanel.revalidate();
+                    sendingPanel.repaint();
+                });
+
+                // Add components to the VBD visualization panel
+                vbdObjectPanel.add(frequencySlider);
+                vbdObjectPanel.add(terminateVBDButton);
+                vbdObjectPanel.add(deviceNumberField);
+                vbdObjectPanel.add(stateComboBox);
+
+                // Add the VBD visualization panel to the VBD panel
+                vbdPanel.add(vbdObjectPanel);
+
+                // Repaint and revalidate the sendingPanel
+                sendingPanel.revalidate();
+                sendingPanel.repaint();
+            }
+        }
+
+        if (whenAddButtonClicked.getSource() == addVRDButton) {
+
+            // Creation of a new VBD object after clicking the Add button in the receiving panel
+            VirtualReceivingDevice vrd = new VirtualReceivingDevice();
+            JPanel vrdObjectPanel = new JPanel();
+            vrdObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 3));
+
+            // Terminate VRD Button
+            JButton terminateVRDButton = new JButton("Terminate");
+            terminateVRDButton.addActionListener(whenTerminateVBDButtonClicked -> {
+                vrdPanel.remove(vrdObjectPanel);
+                receivingPanel.revalidate();
+                receivingPanel.repaint();
+            });
+
+            // Received Messages Label in VRD
+            JLabel receivedMsgs = new JLabel("      The number of received messages: " + vrd.getReceivedMessagesCounter() + "       ");
+
+            // CheckBox in VRD
+            JCheckBox msgRemoveCheckBox = new JCheckBox("Empty the counter every 10 sec");
+            msgRemoveCheckBox.setFocusable(false);
+
+            // Create a JPanel to hold the components of the VRD station
+            vrdObjectPanel.setLayout(new BoxLayout(vrdObjectPanel, BoxLayout.Y_AXIS));
+            vrdObjectPanel.add(receivedMsgs, BorderLayout.NORTH);
+            vrdObjectPanel.add(msgRemoveCheckBox, BorderLayout.CENTER);
+            vrdObjectPanel.add(terminateVRDButton, BorderLayout.SOUTH);
+
+            // Add the VRD object panel to the VRD panel
+            vrdPanel.add(vrdObjectPanel);
+
+            // Repaint and revalidate the receivingPanel
+            receivingPanel.revalidate();
+            receivingPanel.repaint();
+        }
+
+        if (whenAddButtonClicked.getSource() == addBSCButton) {
+            // Create a new BSC Station
+            Station bsc = new Station();
+            JPanel bscObjectPanel = new JPanel();
+            bscObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 3));
+            JLabel bscStationNumberLabel = new JLabel("BSC Station #" + bsc.getStationNumber());
+
+            // Create a button for removing BSC stations
+            JButton removeBSCButton = new JButton("Terminate");
+            removeBSCButton.addActionListener(whenTerminateBSCButtonClicked -> {
+                    bscLayerPanel.remove(bscObjectPanel);
+                    middlePanel.revalidate();
+                    middlePanel.repaint();
+            });
+
+            // Add the BSC components to the bscObjectPanel
+            bscObjectPanel.add(bscStationNumberLabel);
+            bscObjectPanel.add(removeBSCButton);
+
+            // Add the BSC station to the bscLayerPanel
+            bscLayerPanel.add(bscObjectPanel);
+
+            // Repaint and revalidate the middlePanel
+            middlePanel.revalidate();
+            middlePanel.repaint();
+        }
+
+        if (whenAddButtonClicked.getSource() == addBTSButton) {
+            // Create a new BTS station
+            Station bts = new Station();
+            JPanel btsObjectPanel = new JPanel();
+            btsObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 3));
+            JLabel btsStationNumberLabel = new JLabel("BTS Station #" + bts.getStationNumber());
+
+            // Create a button for removing BSC stations
+            JButton removeBTSButton = new JButton("Terminate");
+            removeBTSButton.addActionListener(whenTerminateBTSButtonClicked -> {
+                    btsPanel.remove(btsObjectPanel);
+                    middlePanel.revalidate();
+                    middlePanel.repaint();
+            });
+
+            // Add the BTS components to the btsObjectPanel
+            btsObjectPanel.add(btsStationNumberLabel);
+            btsObjectPanel.add(removeBTSButton);
+
+            // Add the BSC station to the bscLayerPanel
+            btsPanel.add(btsObjectPanel);
+
+            // Repaint and revalidate the middlePanel
+            middlePanel.revalidate();
+            middlePanel.repaint();
+        }
+    }
+}
