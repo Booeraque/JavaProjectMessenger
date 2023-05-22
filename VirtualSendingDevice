@@ -1,0 +1,22 @@
+public class VirtualSendingDevice {
+    private String message;
+    private final String deviceNumber;
+    private static int deviceCounter = 1;
+
+    public VirtualSendingDevice(String msg) {
+        this.message = msg;
+        this.deviceNumber = generateDeviceNumber();
+    }
+
+    public String getDeviceNumber() {
+        return deviceNumber;
+    }
+
+    private static String generateDeviceNumber() {
+        String generatedNumber = "Device " + deviceCounter;
+        deviceCounter++;
+        return generatedNumber;
+    }
+
+    // Rest of the VirtualSendingDevice class implementation
+}
