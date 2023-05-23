@@ -1,0 +1,50 @@
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+
+public class BSC {
+    private final int stationID;
+    private static int nextID = 0;
+    public static int stationCounter;
+    public int numberOfProcessedMessages;
+    private JPanel bscPanel;
+    public static JButton removeStationButton;
+
+    public BSC() {
+        stationID = generateUniqueStationID();
+        stationCounter++;
+        numberOfProcessedMessages = 0;
+        bscPanel = new JPanel();
+        bscPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
+        bscPanel.setLayout(new BoxLayout(bscPanel, BoxLayout.Y_AXIS));
+        JLabel stationNumLabel = new JLabel("BCS #" + this.getStationNumber());
+        removeStationButton = new JButton("Terminate");
+        removeStationButton.setFocusable(false);
+        removeStationButton.addActionListener(whenTerminateButtonClicked -> {
+            if (stationCounter > 1) {
+                bscPanel = null;
+                stationCounter--;
+            }
+            else removeStationButton.setEnabled(false);
+        });
+        bscPanel.add(stationNumLabel);
+        bscPanel.add(removeStationButton);
+    }
+
+    public JPanel getBscPanel() {
+        return bscPanel;
+    }
+
+    public JButton getRemoveStationButton() {
+        return removeStationButton;
+    }
+
+    public int getStationNumber(){
+        return stationID;
+    }
+
+    public int generateUniqueStationID() {
+        nextID++;
+        return nextID;
+    }
+}
