@@ -1,0 +1,43 @@
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class BTS {
+    private final int stationID;
+    private static int stationCounter = 0; // zameny na unique ID
+    public int numberOfProcessedMessages;
+    private final JButton removeStationButton;
+    private final JPanel btsPanel;
+
+
+    public BTS() {
+        numberOfProcessedMessages = 50;
+        stationID = generateUniqueStationID();
+        btsPanel = new JPanel();
+        btsPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
+        btsPanel.setLayout(new BoxLayout(btsPanel, BoxLayout.Y_AXIS));
+        JLabel stationNumLabel = new JLabel("BTS #" + this.getStationNumber());
+        removeStationButton = new JButton("Terminate");
+        removeStationButton.setFocusable(false);
+        btsPanel.add(stationNumLabel);
+        btsPanel.add(removeStationButton);
+    }
+    public JPanel getBtsPanel() {
+        return btsPanel;
+    }
+
+    public JButton getRemoveStationButton() {
+        return removeStationButton;
+    }
+
+    public int getStationNumber(){
+        return stationID;
+    }
+
+    public int generateUniqueStationID() {
+        stationCounter++;
+        return stationCounter;
+    }
+}
