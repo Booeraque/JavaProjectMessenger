@@ -1,35 +1,52 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 public class BTS {
     private final int stationID;
     private static int stationCounter = 0; // zameny na unique ID
     public int numberOfProcessedMessages;
-    private final JButton removeStationButton;
+    private final JButton terminateStationButton;
     private final JPanel btsPanel;
+    private final ArrayList<BTS> leftBTSPanel = new ArrayList<>();
+    private final ArrayList<BTS> rightBTSPanel = new ArrayList<>();
 
 
-    public BTS() {
-        numberOfProcessedMessages = 50;
+    public BTS(boolean type) {
+        numberOfProcessedMessages = 30;
         stationID = generateUniqueStationID();
+        if (type) leftBTSPanel.add(this);
+        else rightBTSPanel.add(this);
         btsPanel = new JPanel();
         btsPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
         btsPanel.setLayout(new BoxLayout(btsPanel, BoxLayout.Y_AXIS));
         JLabel stationNumLabel = new JLabel("BTS #" + this.getStationNumber());
-        removeStationButton = new JButton("Terminate");
-        removeStationButton.setFocusable(false);
+        terminateStationButton = new JButton("Terminate");
+        terminateStationButton.setFocusable(false);
+        terminateStationButton.addActionListener(whenRemoveStationButtonClicked -> {
+            if (type) {
+                if (SMSApp.stationsOnLeftBTS > 1) {
+                    SMSApp.btsLeftLayer.remove(btsPanel);
+                    SMSApp.stationsOnLeftBTS--;
+                    SMSApp.revalidateRepaintPanel(SMSApp.btsLeftLayer);
+                }
+            }
+            else if (SMSApp.stationsOnRightBTS > 1) {
+                SMSApp.btsRightLayer.remove(btsPanel);
+                SMSApp.stationsOnRightBTS--;
+                SMSApp.revalidateRepaintPanel(SMSApp.btsRightLayer);
+            }
+        });
         btsPanel.add(stationNumLabel);
-        btsPanel.add(removeStationButton);
+        btsPanel.add(terminateStationButton);
     }
     public JPanel getBtsPanel() {
         return btsPanel;
     }
 
-    public JButton getRemoveStationButton() {
-        return removeStationButton;
+    public JButton getTerminateStationButton() {
+        return terminateStationButton;
     }
 
     public int getStationNumber(){
