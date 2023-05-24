@@ -1,9 +1,9 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.plaf.basic.DefaultMenuLayout;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 
 /*
 use interfaces or events to divide the visual and the logic part
@@ -11,9 +11,8 @@ Horseman Javacore userinterfaces - book to understand that
 1. Узнать по поводу детализации с лейблами каждого элемента в объекте
 2. Узнать правильно ли я создал панели и нормальное ли их количество
 3. Узнать нормально ли что нету скролл пейна в бсц и бтс панелях
-чекнуть стак бсц и их удаление там по хуйне братан.. респект тебе за твои старания и уважуха..
 чекнуть почему панель бтсиков не растягивается на всю высоту панели
-добавлять потоки топа и реков
+добавлять потоки топа и реков!
  */
 
 public class SMSApp extends JFrame implements ActionListener {
@@ -24,15 +23,15 @@ public class SMSApp extends JFrame implements ActionListener {
     private final JButton vbdButton = new JButton("     Add a VBD     ");
     private final JButton vrdButton = new JButton("     Add a VRD     ");
     private final JButton bscAddButton = new JButton("   Add a BSC Layer   ");
-    private final JButton bscRemoveButton = new JButton("   Remove a BSC Layer   ");
+    private static final JButton bscRemoveLayerButton = new JButton("   Remove a BSC Layer   ");
     private final JPanel vbdPanel;
     private final JPanel vrdPanel;
-    private final JPanel bscLayersPanel;
-    private final JPanel btsLeftLayer;
-    private final JPanel btsRightLayer;
-    private int stationsOnLeftBTS = 0;
-    private int stationsOnRightBTS = 0;
-    private ArrayList<JPanel> bscLayersArray;
+    public static BSCLayersMngr bscLayersMngr = new BSCLayersMngr();
+    private static final JPanel bscLayersPanel = new JPanel();
+    public static JPanel btsLeftLayer;
+    public static JPanel btsRightLayer;
+    public static int stationsOnLeftBTS = 0;
+    public static int stationsOnRightBTS = 0;
 
     SMSApp() {
         // Properties of my main frame
@@ -52,20 +51,20 @@ public class SMSApp extends JFrame implements ActionListener {
 
         // Create a panel to hold the BTS and BSC stations
         JPanel stationsPanel = new JPanel();
+        LineBorder lineBorder = new LineBorder(Color.DARK_GRAY, 2);
         stationsPanel.setLayout(new BoxLayout(stationsPanel, BoxLayout.X_AXIS));
+        stationsPanel.setBorder(lineBorder);
 
         // Create left and right panels for the BTS stations
         btsLeftLayer = new JPanel();
         btsRightLayer = new JPanel();
-        btsLeftLayer.setBorder(new LineBorder(Color.DARK_GRAY, 2));
-        btsRightLayer.setBorder(new LineBorder(Color.DARK_GRAY, 2));
-        btsRightLayer.setLayout(new BoxLayout(btsRightLayer, BoxLayout.Y_AXIS));
+        btsLeftLayer.setBorder(lineBorder);
+        btsRightLayer.setBorder(lineBorder);
         btsLeftLayer.setLayout(new BoxLayout(btsLeftLayer, BoxLayout.Y_AXIS));
+        btsRightLayer.setLayout(new BoxLayout(btsRightLayer, BoxLayout.Y_AXIS));
 
-        BTS btsLeft = new BTS();
-        BTS btsRight = new BTS();
-        btsLeft.getRemoveStationButton().setEnabled(false);
-        btsRight.getRemoveStationButton().setEnabled(false);
+        BTS btsLeft = new BTS(true);
+        BTS btsRight = new BTS(false);
 
         stationsOnLeftBTS++;
         btsLeftLayer.add(btsLeft.getBtsPanel());
@@ -77,55 +76,31 @@ public class SMSApp extends JFrame implements ActionListener {
         for (int i = 0; i < btsLeft.numberOfProcessedMessages / 5; i++) {
             stationsOnLeftBTS++;
 
-            BTS AdditionalLeftBts = new BTS();
-
-
+            BTS AdditionalLeftBts = new BTS(true);
             btsLeftLayer.add(AdditionalLeftBts.getBtsPanel());
-
-            // Repaint and revalidate the middlePanel
             revalidateRepaintPanel(middlePanel);
 
-            AdditionalLeftBts.getRemoveStationButton().addActionListener(whenRemoveStationButtonClicked -> {
-                if (stationsOnLeftBTS > 1) {
-                    btsLeftLayer.remove(AdditionalLeftBts.getBtsPanel());
-                    stationsOnLeftBTS--;
-                    revalidateRepaintPanel(middlePanel);
-                }
-            });
         }
 
         // Adding one more BTS station to the right if processed messages are more than 5
         for (int i = 0; i < btsRight.numberOfProcessedMessages / 5; i++) {
             stationsOnRightBTS++;
 
-            BTS AdditionalRightBts = new BTS();
-
-
+            BTS AdditionalRightBts = new BTS(false);
             btsRightLayer.add(AdditionalRightBts.getBtsPanel());
-
-            // Repaint and revalidate the sendingPanel
             revalidateRepaintPanel(middlePanel);
 
-            AdditionalRightBts.getRemoveStationButton().addActionListener(whenRemoveStationButtonClicked -> {
-                if (stationsOnRightBTS > 1) {
-                    btsRightLayer.remove(AdditionalRightBts.getBtsPanel());
-                    stationsOnRightBTS--;
-                    revalidateRepaintPanel(middlePanel);
-                }
-            });
         }
 
-        // Create a panel for the BSC stations
-        bscLayersPanel = new JPanel();
+        // Create a panel and a manager for the BSC stations
         bscLayersPanel.setLayout(new BoxLayout(bscLayersPanel, BoxLayout.X_AXIS));
         JPanel bscLayer = new JPanel();
-        bscLayer.setBorder(new LineBorder(Color.DARK_GRAY, 2));
-        bscLayersArray = new ArrayList<>();
+        bscLayer.setBorder(lineBorder);
         BSC bsc = new BSC();
-        bsc.getRemoveStationButton().setEnabled(false);
-        bscLayer.add(bsc.getBscPanel());
 
-        bscLayersArray.add(bscLayer);
+        bscLayer.add(bsc.getBscPanel());
+        bscLayersMngr.addBSCLayer(bscLayer);
+        bscLayersMngr.addBscToLayer(bscLayer, bsc);
         bscLayersPanel.add(bscLayer);
 
         // Add the BTS and BSC layers to the stationsPanel
@@ -136,16 +111,16 @@ public class SMSApp extends JFrame implements ActionListener {
         // Create a button for adding BSC layers
         bscAddButton.addActionListener(this);
         bscAddButton.setFocusable(false);
-        bscRemoveButton.addActionListener(this);
-        bscRemoveButton.setFocusable(false);
+        bscRemoveLayerButton.addActionListener(this);
+        bscRemoveLayerButton.setFocusable(false);
         updateRemoveBscButton();
 
         // Create a panel to hold the buttons
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setBorder(new LineBorder(Color.DARK_GRAY, 2));
+        buttonPanel.setBorder(lineBorder);
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(bscAddButton);
-        buttonPanel.add(bscRemoveButton);
+        buttonPanel.add(bscRemoveLayerButton);
 
         // Create the JPanel for virtual sending devices (VBD)
         vbdPanel = new JPanel();
@@ -288,56 +263,56 @@ public class SMSApp extends JFrame implements ActionListener {
             JPanel bscLayer = new JPanel();
             JPanel bscObjectPanel = bsc.getBscPanel();
             bscLayer.setBorder(new LineBorder(Color.DARK_GRAY, 2));
-            bsc.getRemoveStationButton().addActionListener(whenTerminateBSCButtonClicked -> {
-                removePanelRevalidate(bscLayer, bscObjectPanel);
-                if (bscLayer.getComponentCount() <= 0) {
-                    bscLayersPanel.remove(bscLayer);
-                    bscLayersArray.remove(bscLayer);
-                    updateRemoveBscButton();
-                }
-            });
 
             bscLayer.add(bscObjectPanel);
-            bscLayersArray.add(bscLayer);
+            bscLayersMngr.addBSCLayer(bscLayer);
+            bscLayersMngr.addBscToLayer(bscLayer, bsc);
             addPanelRevalidate(bscLayersPanel, bscLayer);
+            System.out.println(bscLayersMngr.getTotalBscCount());
 
             updateRemoveBscButton();
-            updateTerminateBscStationButton();
         }
-        else if (whenButtonClicked.getSource() == bscRemoveButton) {
+        else if (whenButtonClicked.getSource() == bscRemoveLayerButton) {
             // Handle BSC remove button click
-            if (bscLayersArray.size() > 1) {
-                JPanel lastBscLayer = bscLayersArray.get(bscLayersArray.size() - 1);
-                int bscInLayer = lastBscLayer.getComponentCount();
-                for (int i = 0; i < bscInLayer; i++) BSC.stationCounter--;
+            if (bscLayersMngr.getLayersNumber() > 1) {
+                JPanel lastBscLayer = bscLayersMngr.getLastLayer();
                 removePanelRevalidate(bscLayersPanel, lastBscLayer);
-                bscLayersArray.remove(lastBscLayer);
+                bscLayersMngr.removeLayer(lastBscLayer);
                 updateRemoveBscButton();
-                updateTerminateBscStationButton();
             }
         }
     }
-
     private void addPanelRevalidate(Container subPanel, JPanel panel) {
         subPanel.add(panel);
         revalidateRepaintPanel(subPanel);
     }
-
-    private void removePanelRevalidate(Container subPanel, JPanel panel) {
+    private static void removePanelRevalidate(Container subPanel, JPanel panel) {
         subPanel.remove(panel);
         revalidateRepaintPanel(subPanel);
     }
-
-    private void updateRemoveBscButton() {
-        bscRemoveButton.setEnabled(bscLayersArray.size() > 1);
+    private static void updateRemoveBscButton() {
+        bscRemoveLayerButton.setEnabled(bscLayersMngr.getLayersNumber() > 1);
     }
 
-    private void updateTerminateBscStationButton() {
-        BSC.removeStationButton.setEnabled(BSC.stationCounter > 1);
-    }
-
-    private void revalidateRepaintPanel(Component panel) {
+    public static void revalidateRepaintPanel(Component panel) {
         panel.revalidate();
         panel.repaint();
+    }
+    /*
+    private ArrayList<BSC> getBscObjectsOnLayer(int layerNum) {
+        ArrayList<BSC> res = new ArrayList<>();
+        //TODO finish this
+        return res;
+    }
+     */
+    public static void removeBscStationFromPanel(BSC bsc) {
+        JPanel layer = bscLayersMngr.getLayerFromBsc(bsc);
+        removePanelRevalidate(layer, bsc.getBscPanel());
+        bscLayersMngr.removeBscFromLayer(layer, bsc);
+        if (layer.getComponentCount() <= 0) {
+            bscLayersPanel.remove(layer);
+            bscLayersMngr.removeLayer(layer);
+            updateRemoveBscButton();
+        }
     }
 }
