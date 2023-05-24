@@ -1,18 +1,19 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 public class BSC {
     private final int stationID;
     private static int nextID = 0;
-    public static int stationCounter;
     public int numberOfProcessedMessages;
-    private JPanel bscPanel;
+    private final JPanel bscPanel;
     public static JButton removeStationButton;
 
     public BSC() {
         stationID = generateUniqueStationID();
-        stationCounter++;
+        BSCLayersMngr.bscCounter++;
         numberOfProcessedMessages = 0;
         bscPanel = new JPanel();
         bscPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
@@ -21,11 +22,10 @@ public class BSC {
         removeStationButton = new JButton("Terminate");
         removeStationButton.setFocusable(false);
         removeStationButton.addActionListener(whenTerminateButtonClicked -> {
-            if (stationCounter > 1) {
-                bscPanel = null;
-                stationCounter--;
+            if (SMSApp.bscLayersMngr.getTotalBscCount() > 1) {
+                BSCLayersMngr.bscCounter--;
+                SMSApp.removeBscStationFromPanel(this);
             }
-            else removeStationButton.setEnabled(false);
         });
         bscPanel.add(stationNumLabel);
         bscPanel.add(removeStationButton);
@@ -33,10 +33,6 @@ public class BSC {
 
     public JPanel getBscPanel() {
         return bscPanel;
-    }
-
-    public JButton getRemoveStationButton() {
-        return removeStationButton;
     }
 
     public int getStationNumber(){
