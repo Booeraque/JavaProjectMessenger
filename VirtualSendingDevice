@@ -8,6 +8,17 @@ public class VirtualSendingDevice {
         this.deviceNumber = generateDeviceNumber();
     }
 
+    public void startThreadAndPassToLayers() {
+        // Create a new thread with the message and device number
+        Thread thread = new Thread(() -> {
+            // Perform any necessary operations or actions in the thread
+            System.out.println("Thread started for device: " + deviceNumber);
+        });
+
+        // Start the thread
+        thread.start();
+    }
+
     public String getDeviceNumber() {
         return deviceNumber;
     }
