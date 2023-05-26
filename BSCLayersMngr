@@ -27,13 +27,27 @@ public class BSCLayersMngr {
         // Add the object to the corresponding layer
         layerMap.get(layer).add(bsc);
     }
-/*
-    public void accessAllBsc() {
-        for (JPanel layer : layerList) {
-            for (BSC bsc : layerMap.get(layer)) bsc.
+
+    public BSC findFreeBSConLayer(int layerIndex) {
+        JPanel bscLayer = null;
+        int bscInd = 0;
+        int minimalNumOfProcessedMsgs = 5;
+        if (layerIndex >= 0 && layerIndex < layerList.size()) {
+            JPanel layer = layerList.get(layerIndex);
+            for (BSC bsc : layerMap.get(layer)) {
+                int bscNumOfProcessedMsgs = bsc.numberOfProcessedMessages;
+                if (bscNumOfProcessedMsgs < minimalNumOfProcessedMsgs) {
+                    minimalNumOfProcessedMsgs = bscNumOfProcessedMsgs;
+                    bscLayer = layer;
+                    bscInd = layerMap.get(layer).indexOf(bsc);
+                }
+            }
+            if (minimalNumOfProcessedMsgs != 5) return layerMap.get(bscLayer).get(bscInd);
+            return SMSApp.createNewBSConLayer(layer);
         }
+        return null;
     }
- */
+
     public int getTotalBscCount() {
         return bscCounter;
     }
