@@ -5,48 +5,71 @@ import java.util.ArrayList;
 
 public class BTS {
     private final int stationID;
+    private final boolean btsSide;
     private static int stationCounter = 0; // zameny na unique ID
     public int numberOfProcessedMessages;
-    private final JButton terminateStationButton;
     private final JPanel btsPanel;
-    private final ArrayList<BTS> leftBTSPanel = new ArrayList<>();
-    private final ArrayList<BTS> rightBTSPanel = new ArrayList<>();
-
+    private static final ArrayList<BTS> leftBTSArray = new ArrayList<>();
+    private static final ArrayList<BTS> rightBTSArray = new ArrayList<>();
 
     public BTS(boolean type) {
-        numberOfProcessedMessages = 30;
+        btsSide = type;
+        numberOfProcessedMessages = 0;
         stationID = generateUniqueStationID();
-        if (type) leftBTSPanel.add(this);
-        else rightBTSPanel.add(this);
+        if (btsSide) leftBTSArray.add(this);
+        else rightBTSArray.add(this);
         btsPanel = new JPanel();
         btsPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
         btsPanel.setLayout(new BoxLayout(btsPanel, BoxLayout.Y_AXIS));
-        JLabel stationNumLabel = new JLabel("BTS #" + this.getStationNumber());
-        terminateStationButton = new JButton("Terminate");
+        JLabel stationNumLabel = new JLabel("BTS #" + getStationNumber());
+        JButton terminateStationButton = new JButton("Terminate");
         terminateStationButton.setFocusable(false);
         terminateStationButton.addActionListener(whenRemoveStationButtonClicked -> {
-            if (type) {
-                if (SMSApp.stationsOnLeftBTS > 1) {
+            if (btsSide) {
+                if (leftBTSArray.size() > 1) {
                     SMSApp.btsLeftLayer.remove(btsPanel);
-                    SMSApp.stationsOnLeftBTS--;
+                    leftBTSArray.remove(this);
                     SMSApp.revalidateRepaintPanel(SMSApp.btsLeftLayer);
                 }
             }
-            else if (SMSApp.stationsOnRightBTS > 1) {
+            else if (rightBTSArray.size() > 1) {
                 SMSApp.btsRightLayer.remove(btsPanel);
-                SMSApp.stationsOnRightBTS--;
+                rightBTSArray.remove(this);
                 SMSApp.revalidateRepaintPanel(SMSApp.btsRightLayer);
             }
         });
         btsPanel.add(stationNumLabel);
         btsPanel.add(terminateStationButton);
     }
+
+    public static BTS findFreeLeftBTSStation() {
+        int minimalNumOfProcessedMsgs = 5;
+        int btsInd = 0;
+        for (BTS bts : leftBTSArray) {
+            int btsNumOfProcessedMsgs = bts.numberOfProcessedMessages;
+            if (btsNumOfProcessedMsgs < minimalNumOfProcessedMsgs) {
+                minimalNumOfProcessedMsgs = btsNumOfProcessedMsgs;
+                btsInd = leftBTSArray.indexOf(bts);
+            }
+        }
+        if (minimalNumOfProcessedMsgs != 5) return leftBTSArray.get(btsInd);
+        else return SMSApp.createNewLeftBTS();
+    }
+    public static BTS findFreeRightBTSStation() {
+        int minimalNumOfProcessedMsgs = 5;
+        int btsInd = 0;
+        for (BTS bts : rightBTSArray) {
+            int btsNumOfProcessedMsgs = bts.numberOfProcessedMessages;
+            if (btsNumOfProcessedMsgs < minimalNumOfProcessedMsgs) {
+                minimalNumOfProcessedMsgs = btsNumOfProcessedMsgs;
+                btsInd = rightBTSArray.indexOf(bts);
+            }
+        }
+        if (minimalNumOfProcessedMsgs != 5) return rightBTSArray.get(btsInd);
+        else return SMSApp.createNewRightBTS();
+    }
     public JPanel getBtsPanel() {
         return btsPanel;
-    }
-
-    public JButton getTerminateStationButton() {
-        return terminateStationButton;
     }
 
     public int getStationNumber(){
@@ -56,5 +79,13 @@ public class BTS {
     public int generateUniqueStationID() {
         stationCounter++;
         return stationCounter;
+    }
+
+    public void increaseNumberOfProcessedMessages() {
+        this.numberOfProcessedMessages++;
+    }
+
+    public void decreaseNumberOfProcessedMessages() {
+        this.numberOfProcessedMessages--;
     }
 }
