@@ -1,12 +1,87 @@
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
 public class VirtualReceivingDevice {
 
-    private int msgReceived;
+    private static final List<VirtualReceivingDevice> vrdList = new ArrayList<>();
+    private final List<String> messagesReceivedList;
+    private final JPanel vrdObjectPanel;
+    private final JLabel receivedMsgs;
 
     VirtualReceivingDevice() {
-        msgReceived = 0;
+        messagesReceivedList = new ArrayList<>();
+        vrdList.add(this);
+        vrdObjectPanel = new JPanel();
+        vrdObjectPanel.setLayout(new BoxLayout(vrdObjectPanel, BoxLayout.Y_AXIS));
+        vrdObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 2));
+
+        JButton terminateVRDButton = new JButton("Terminate");
+        terminateVRDButton.addActionListener(whenTerminateVBDButtonClicked -> {
+            SMSApp.removeVRDObjectFromPanel(vrdObjectPanel);
+            vrdList.remove(this);
+        });
+        JLabel terminateVRDLabel = new JLabel("Terminate VRD button:");
+        JPanel terminateVRDPanel = new JPanel(new BorderLayout());
+        terminateVRDPanel.add(terminateVRDLabel, BorderLayout.WEST);
+        terminateVRDPanel.add(terminateVRDButton, BorderLayout.CENTER);
+
+        JLabel receivedMsgsLabel = new JLabel("The number of received messages: ");
+        JPanel receivedMsgsPanel = new JPanel(new BorderLayout());
+        receivedMsgs = new JLabel(String.valueOf(this.getReceivedMessagesCounter()));
+        receivedMsgsPanel.add(receivedMsgsLabel, BorderLayout.WEST);
+        receivedMsgsPanel.add(receivedMsgs, BorderLayout.CENTER);
+
+        JCheckBox msgRemoveCheckBox = new JCheckBox();
+        msgRemoveCheckBox.setFocusable(false);
+        Thread msgRemoveCheckBoxThread = new Thread(() -> {
+            while (true) {
+                    try {
+                        Thread.sleep(10000); // Sleep for 10 seconds
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                if (msgRemoveCheckBox.isSelected()) {
+                    messagesReceivedList.clear();
+                    updateReceivedMessagesLabel();
+                }
+            }
+        });
+        JLabel msgRemoveLabel = new JLabel("Empty the counter every 10 sec:");
+        JPanel msgRemovePanel = new JPanel(new BorderLayout());
+        msgRemovePanel.add(msgRemoveLabel, BorderLayout.WEST);
+        msgRemovePanel.add(msgRemoveCheckBox, BorderLayout.CENTER);
+
+        // Create a JPanel to hold the components of the VRD station
+        vrdObjectPanel.setLayout(new BoxLayout(vrdObjectPanel, BoxLayout.Y_AXIS));
+        vrdObjectPanel.add(receivedMsgsPanel);
+        vrdObjectPanel.add(msgRemovePanel);
+        vrdObjectPanel.add(terminateVRDPanel);
+        msgRemoveCheckBoxThread.start();
+    }
+
+    public static VirtualReceivingDevice chooseRandomVRD() {
+        int randomVRD = (int)((Math.random() * (vrdList.size())));
+        return vrdList.get(randomVRD);
     }
 
     public int getReceivedMessagesCounter() {
-        return msgReceived;
+        return messagesReceivedList.size();
+    }
+
+    public void receiveSMS(String message) {
+        messagesReceivedList.add(message);
+        updateReceivedMessagesLabel();
+        System.out.println("The message was delivered successfully! \nHere is the message: " + message + "\n=====================");
+    }
+
+    private void updateReceivedMessagesLabel() {
+        receivedMsgs.setText(String.valueOf(this.getReceivedMessagesCounter()));
+    }
+
+    public JPanel getVrdObjectPanel() {
+        return vrdObjectPanel;
     }
 }
