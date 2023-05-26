@@ -1,43 +1,32 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-import javax.swing.plaf.basic.DefaultMenuLayout;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/*
-use interfaces or events to divide the visual and the logic part
-Horseman Javacore userinterfaces - book to understand that
-1. Узнать по поводу детализации с лейблами каждого элемента в объекте
-2. Узнать правильно ли я создал панели и нормальное ли их количество
-3. Узнать нормально ли что нету скролл пейна в бсц и бтс панелях
-чекнуть почему панель бтсиков не растягивается на всю высоту панели
-добавлять потоки топа и реков!
- */
 
 public class SMSApp extends JFrame implements ActionListener {
 
-    private final JPanel sendingPanel;
-    private final JPanel receivingPanel;
-    private final JPanel middlePanel;
+    private static JPanel sendingPanel;
+    private static JPanel receivingPanel;
+    private static JPanel middlePanel;
     private final JButton vbdButton = new JButton("     Add a VBD     ");
     private final JButton vrdButton = new JButton("     Add a VRD     ");
     private final JButton bscAddButton = new JButton("   Add a BSC Layer   ");
     private static final JButton bscRemoveLayerButton = new JButton("   Remove a BSC Layer   ");
-    private final JPanel vbdPanel;
-    private final JPanel vrdPanel;
+    private static JPanel vbdPanel;
+    private static JPanel vrdPanel;
     public static BSCLayersMngr bscLayersMngr = new BSCLayersMngr();
     private static final JPanel bscLayersPanel = new JPanel();
     public static JPanel btsLeftLayer;
     public static JPanel btsRightLayer;
-    public static int stationsOnLeftBTS = 0;
-    public static int stationsOnRightBTS = 0;
 
     SMSApp() {
         // Properties of my main frame
         setSize(1400, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("SMSApp made by Yegor Burykin");
+        setLayout(new BorderLayout());
 
         // My three main panels that will contain everything
         sendingPanel = new JPanel();
@@ -60,42 +49,19 @@ public class SMSApp extends JFrame implements ActionListener {
         btsRightLayer = new JPanel();
         btsLeftLayer.setBorder(lineBorder);
         btsRightLayer.setBorder(lineBorder);
-        btsLeftLayer.setLayout(new BoxLayout(btsLeftLayer, BoxLayout.Y_AXIS));
-        btsRightLayer.setLayout(new BoxLayout(btsRightLayer, BoxLayout.Y_AXIS));
+        btsLeftLayer.setLayout(new GridLayout(18, 1));
+        btsRightLayer.setLayout(new GridLayout(18, 1));
 
         BTS btsLeft = new BTS(true);
         BTS btsRight = new BTS(false);
-
-        stationsOnLeftBTS++;
         btsLeftLayer.add(btsLeft.getBtsPanel());
-
-        stationsOnRightBTS++;
         btsRightLayer.add(btsRight.getBtsPanel());
-
-        // Adding one more BTS station to the left if processed messages are more than 5
-        for (int i = 0; i < btsLeft.numberOfProcessedMessages / 5; i++) {
-            stationsOnLeftBTS++;
-
-            BTS AdditionalLeftBts = new BTS(true);
-            btsLeftLayer.add(AdditionalLeftBts.getBtsPanel());
-            revalidateRepaintPanel(middlePanel);
-
-        }
-
-        // Adding one more BTS station to the right if processed messages are more than 5
-        for (int i = 0; i < btsRight.numberOfProcessedMessages / 5; i++) {
-            stationsOnRightBTS++;
-
-            BTS AdditionalRightBts = new BTS(false);
-            btsRightLayer.add(AdditionalRightBts.getBtsPanel());
-            revalidateRepaintPanel(middlePanel);
-
-        }
 
         // Create a panel and a manager for the BSC stations
         bscLayersPanel.setLayout(new BoxLayout(bscLayersPanel, BoxLayout.X_AXIS));
         JPanel bscLayer = new JPanel();
         bscLayer.setBorder(lineBorder);
+        bscLayer.setLayout(new GridLayout(15, 1));
         BSC bsc = new BSC();
 
         bscLayer.add(bsc.getBscPanel());
@@ -162,9 +128,6 @@ public class SMSApp extends JFrame implements ActionListener {
         sendingPanel.add(vbdButton, BorderLayout.SOUTH);
         receivingPanel.add(vrdButton, BorderLayout.SOUTH);
 
-        // Set the layout for the main frame
-        setLayout(new BorderLayout());
-
         // Add the panels to the main frame
         add(sendingPanel, BorderLayout.WEST);
         add(receivingPanel, BorderLayout.EAST);
@@ -177,99 +140,31 @@ public class SMSApp extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent whenButtonClicked) {
-
-        updateRemoveBscButton();
-
         if (whenButtonClicked.getSource() == vbdButton) {
             String message = JOptionPane.showInputDialog(this, "Enter a short text message:");
-
-            if (message != null && !message.isEmpty()) {
-                // Creation of a new VBD object after clicking the Add button in the sending panel
-                VirtualSendingDevice vbd = new VirtualSendingDevice(message);
-                JPanel vbdObjectPanel = new JPanel();
-                vbdObjectPanel.setLayout(new BoxLayout(vbdObjectPanel, BoxLayout.Y_AXIS));
-                vbdObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 2));
-
-                // Frequency slider
-                JSlider frequencySlider = new JSlider(JSlider.HORIZONTAL, 0, 50, 25);
-                frequencySlider.setMinorTickSpacing(5);
-                frequencySlider.setMajorTickSpacing(10);
-                frequencySlider.setPaintTicks(true);
-                frequencySlider.setPaintLabels(true);
-
-                // Device number TextField
-                JTextField deviceNumberField = new JTextField(vbd.getDeviceNumber());
-                deviceNumberField.setEditable(false);
-
-                // State combobox
-                JComboBox<String> stateComboBox = new JComboBox<>(new String[]{"WAITING", "ACTIVE"});
-
-                // Terminate VBD button
-                JButton terminateVBDButton = new JButton("Terminate");
-                terminateVBDButton.addActionListener(whenTerminateButtonClicked -> {
-                    vbdPanel.remove(vbdObjectPanel);
-                    revalidateRepaintPanel(sendingPanel);
-                });
-
-                // Add components to the VBD visualization panel
-                vbdObjectPanel.add(frequencySlider);
-                vbdObjectPanel.add(terminateVBDButton);
-                vbdObjectPanel.add(deviceNumberField);
-                vbdObjectPanel.add(stateComboBox);
-
-                // Add the VBD visualization panel to the VBD panel
-                vbdPanel.add(vbdObjectPanel);
-
-                // Repaint and revalidate the sendingPanel
-                revalidateRepaintPanel(sendingPanel);
-            }
+            VirtualSendingDevice vbd = new VirtualSendingDevice(message);
+            vbdPanel.add(vbd.getVbdObjectPanel());
+            revalidateRepaintPanel(sendingPanel);
         }
+
         else if (whenButtonClicked.getSource() == vrdButton) {
-
-            // Creation of a new VBD object after clicking the Add button in the receiving panel
             VirtualReceivingDevice vrd = new VirtualReceivingDevice();
-            JPanel vrdObjectPanel = new JPanel();
-            vrdObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 2));
-
-            // Terminate VRD Button
-            JButton terminateVRDButton = new JButton("Terminate");
-            terminateVRDButton.addActionListener(whenTerminateVBDButtonClicked -> {
-                vrdPanel.remove(vrdObjectPanel);
-                revalidateRepaintPanel(receivingPanel);
-            });
-
-            // Received Messages Label in VRD
-            JLabel receivedMsgs = new JLabel("      The number of received messages: " + vrd.getReceivedMessagesCounter() + "       ");
-
-            // CheckBox in VRD
-            JCheckBox msgRemoveCheckBox = new JCheckBox("Empty the counter every 10 sec");
-            msgRemoveCheckBox.setFocusable(false);
-
-            // Create a JPanel to hold the components of the VRD station
-            vrdObjectPanel.setLayout(new BoxLayout(vrdObjectPanel, BoxLayout.Y_AXIS));
-            vrdObjectPanel.add(receivedMsgs, BorderLayout.NORTH);
-            vrdObjectPanel.add(msgRemoveCheckBox, BorderLayout.CENTER);
-            vrdObjectPanel.add(terminateVRDButton, BorderLayout.SOUTH);
-
-            // Add the VRD object panel to the VRD panel
-            vrdPanel.add(vrdObjectPanel);
-
-            // Repaint and revalidate the receivingPanel
+            vrdPanel.add(vrd.getVrdObjectPanel());
             revalidateRepaintPanel(receivingPanel);
         }
+
         else if (whenButtonClicked.getSource() == bscAddButton) {
             // Handle BSC add button click
             BSC bsc = new BSC();
             JPanel bscLayer = new JPanel();
             JPanel bscObjectPanel = bsc.getBscPanel();
             bscLayer.setBorder(new LineBorder(Color.DARK_GRAY, 2));
-
+            bscLayer.setLayout(new GridLayout(15, 1));
             bscLayer.add(bscObjectPanel);
             bscLayersMngr.addBSCLayer(bscLayer);
             bscLayersMngr.addBscToLayer(bscLayer, bsc);
-            addPanelRevalidate(bscLayersPanel, bscLayer);
+            addBSCLayerRevalidate(bscLayer);
             System.out.println(bscLayersMngr.getTotalBscCount());
-
             updateRemoveBscButton();
         }
         else if (whenButtonClicked.getSource() == bscRemoveLayerButton) {
@@ -282,14 +177,17 @@ public class SMSApp extends JFrame implements ActionListener {
             }
         }
     }
-    private void addPanelRevalidate(Container subPanel, JPanel panel) {
-        subPanel.add(panel);
-        revalidateRepaintPanel(subPanel);
+
+    private void addBSCLayerRevalidate(JPanel panel) {
+        bscLayersPanel.add(panel);
+        revalidateRepaintPanel(bscLayersPanel);
     }
+
     private static void removePanelRevalidate(Container subPanel, JPanel panel) {
         subPanel.remove(panel);
         revalidateRepaintPanel(subPanel);
     }
+
     private static void updateRemoveBscButton() {
         bscRemoveLayerButton.setEnabled(bscLayersMngr.getLayersNumber() > 1);
     }
@@ -298,13 +196,30 @@ public class SMSApp extends JFrame implements ActionListener {
         panel.revalidate();
         panel.repaint();
     }
-    /*
-    private ArrayList<BSC> getBscObjectsOnLayer(int layerNum) {
-        ArrayList<BSC> res = new ArrayList<>();
-        //TODO finish this
-        return res;
+
+    public static BTS createNewLeftBTS(){
+        BTS additionalLeftBts = new BTS(true);
+        btsLeftLayer.add(additionalLeftBts.getBtsPanel());
+        revalidateRepaintPanel(middlePanel);
+        return additionalLeftBts;
     }
-     */
+
+    public static BTS createNewRightBTS(){
+        BTS additionalRightBts = new BTS(false);
+        btsRightLayer.add(additionalRightBts.getBtsPanel());
+        revalidateRepaintPanel(middlePanel);
+        return additionalRightBts;
+    }
+
+    public static BSC createNewBSConLayer(JPanel layer) {
+        BSC additionalBSC = new BSC();
+        layer.add(additionalBSC.getBscPanel());
+        bscLayersMngr.addBscToLayer(layer, additionalBSC);
+        revalidateRepaintPanel(middlePanel);
+        System.out.println(bscLayersMngr.getTotalBscCount());
+        return additionalBSC;
+    }
+
     public static void removeBscStationFromPanel(BSC bsc) {
         JPanel layer = bscLayersMngr.getLayerFromBsc(bsc);
         removePanelRevalidate(layer, bsc.getBscPanel());
@@ -314,5 +229,15 @@ public class SMSApp extends JFrame implements ActionListener {
             bscLayersMngr.removeLayer(layer);
             updateRemoveBscButton();
         }
+    }
+
+    public static void removeVRDObjectFromPanel(JPanel vrdObjectPanel){
+        vrdPanel.remove(vrdObjectPanel);
+        revalidateRepaintPanel(receivingPanel);
+    }
+
+    public static void removeVBDObjectFromPanel(JPanel vbdObjectPanel) {
+        vbdPanel.remove(vbdObjectPanel);
+        revalidateRepaintPanel(sendingPanel);
     }
 }
