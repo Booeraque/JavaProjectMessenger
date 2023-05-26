@@ -1,22 +1,186 @@
-public class VirtualSendingDevice {
-    private String message;
-    private final String deviceNumber;
-    private static int deviceCounter = 1;
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Objects;
 
-    public VirtualSendingDevice(String msg) {
-        this.message = msg;
+public class VirtualSendingDevice {
+    private final String message;
+    private final String deviceNumber;
+    private JPanel vbdObjectPanel;
+    private int sliderValue = 1;
+    private boolean vbdState = true;
+    private static int deviceCounter = 1;
+    private JComboBox<String> stateComboBox;
+    private JSlider frequencySlider;
+    private Thread sendingThread;
+
+    public VirtualSendingDevice(String message) {
+        this.message = message;
         this.deviceNumber = generateDeviceNumber();
+        if (message != null && !message.isEmpty()) {
+            // Creation of a new VBD object after clicking the Add button in the sending panel
+            vbdObjectPanel = new JPanel();
+            vbdObjectPanel.setLayout(new BoxLayout(vbdObjectPanel, BoxLayout.Y_AXIS));
+            vbdObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
+
+            frequencySlider = new JSlider(JSlider.HORIZONTAL, 1, 60, 1);
+            frequencySlider.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    int newSliderValue = frequencySlider.getValue();
+                    if (sliderValue != newSliderValue) {
+                        sliderValue = newSliderValue;
+                        if (vbdState) {
+                            restartSendingThread();
+                        }
+                    }
+                }
+            });
+
+            JLabel frequencyLabel = new JLabel("Frequency:");
+            JPanel frequencyPanel = new JPanel(new BorderLayout());
+            frequencyPanel.add(frequencyLabel, BorderLayout.WEST);
+            frequencyPanel.add(frequencySlider, BorderLayout.CENTER);
+
+            JTextField deviceNumberField = new JTextField(this.getDeviceNumber());
+            deviceNumberField.setEditable(false);
+            JLabel deviceNumberLabel = new JLabel("Device Number:");
+            JPanel deviceNumberPanel = new JPanel(new BorderLayout());
+            deviceNumberPanel.add(deviceNumberLabel, BorderLayout.WEST);
+            deviceNumberPanel.add(deviceNumberField, BorderLayout.CENTER);
+
+            stateComboBox = new JComboBox<>(new String[]{"ACTIVE", "WAITING"});
+            stateComboBox.addActionListener(whenComboBoxChanged -> {
+                vbdState = Objects.equals(stateComboBox.getSelectedItem(), "ACTIVE");
+                if (vbdState) {
+                    restartSendingThread();
+                } else {
+                    stopSendingThread();
+                }
+            });
+
+            JLabel stateLabel = new JLabel("State:");
+            JPanel statePanel = new JPanel(new BorderLayout());
+            statePanel.add(stateLabel, BorderLayout.WEST);
+            statePanel.add(stateComboBox, BorderLayout.CENTER);
+
+            JButton terminateVBDButton = new JButton("Terminate");
+            terminateVBDButton.addActionListener(whenTerminateButtonClicked -> {
+                vbdState = false;
+                SMSApp.removeVBDObjectFromPanel(vbdObjectPanel);
+            });
+            JLabel buttonLabel = new JLabel("Terminate VBD button:");
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.add(buttonLabel, BorderLayout.WEST);
+            buttonPanel.add(terminateVBDButton, BorderLayout.CENTER);
+
+            vbdObjectPanel.add(frequencyPanel);
+            vbdObjectPanel.add(deviceNumberPanel);
+            vbdObjectPanel.add(statePanel);
+            vbdObjectPanel.add(buttonPanel);
+
+            restartSendingThread();
+        }
     }
 
-    public void startThreadAndPassToLayers() {
-        // Create a new thread with the message and device number
-        Thread thread = new Thread(() -> {
-            // Perform any necessary operations or actions in the thread
-            System.out.println("Thread started for device: " + deviceNumber);
-        });
+    private void restartSendingThread() {
+        stopSendingThread();
+        sendingThread = new Thread(this::startSendingMessages);
+        sendingThread.start();
+    }
 
-        // Start the thread
-        thread.start();
+    private void stopSendingThread() {
+        if (sendingThread != null) {
+            sendingThread.interrupt();
+            try {
+                sendingThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            sendingThread = null;
+        }
+    }
+    private void startSendingMessages() {
+        while (vbdState) {
+            for (int i = 0; i < sliderValue; i++) {
+                if (!vbdState) break;
+                // Find a free BTS on the Left BTS layer and pass the message there.
+                BTS freeLeftBTS = BTS.findFreeLeftBTSStation();
+                freeLeftBTS.increaseNumberOfProcessedMessages();
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                freeLeftBTS.decreaseNumberOfProcessedMessages();
+
+                if (!vbdState) return;
+
+                // Pass the SMS through the BSC layers
+                iterateThroughAllBSCLayers();
+
+                if (!vbdState) return;
+
+                // Find a free BTS on the Right BTS layer and pass the message there.
+                BTS freeRightBTS = BTS.findFreeRightBTSStation();
+                freeRightBTS.increaseNumberOfProcessedMessages();
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    System.out.println("Thread is interrupted");
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                freeRightBTS.decreaseNumberOfProcessedMessages();
+
+                if (!vbdState) return;
+
+                // Pass the SMS to the random VRD
+                try {
+                    VirtualReceivingDevice.chooseRandomVRD().receiveSMS(message);
+                } catch (IndexOutOfBoundsException e) {
+                    System.out.println("The recipient for the " + deviceNumber + " doesn't exist");
+                }
+
+                try {
+                    Thread.sleep(60000 / sliderValue);
+                } catch (InterruptedException e) {
+                    System.out.println("Thread is interrupted");
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+    }
+
+    private void iterateThroughAllBSCLayers() {
+        for (int i = 0; i < SMSApp.bscLayersMngr.getLayersNumber(); i++) {
+            if (!vbdState) break;
+            BSC bsc = SMSApp.bscLayersMngr.findFreeBSConLayer(i);
+            bsc.increaseNumberOfProcessedMessages();
+            int delay = generateRandomDelay() * 1000;
+            // Simulate passing through the BSC with a random delay
+            try {
+                Thread.sleep(delay);
+                System.out.println("BSC layer number " + (i + 1) + ", with the delay of " + delay / 1000 + " seconds, was passed successfully");
+            } catch (InterruptedException e) {
+                System.out.println("You've just stopped transmission of a message");
+                Thread.currentThread().interrupt();
+                return;
+            }
+            bsc.decreaseNumberOfProcessedMessages();
+        }
+    }
+
+    private int generateRandomDelay() {
+        return (int) (Math.random() * (15 - 5 + 1) + 5);
+    }
+
+    public JPanel getVbdObjectPanel() {
+        return vbdObjectPanel;
     }
 
     public String getDeviceNumber() {
@@ -24,10 +188,8 @@ public class VirtualSendingDevice {
     }
 
     private static String generateDeviceNumber() {
-        String generatedNumber = "Device " + deviceCounter;
+        String generatedNumber = "VBD " + deviceCounter;
         deviceCounter++;
         return generatedNumber;
     }
-
-    // Rest of the VirtualSendingDevice class implementation
 }
