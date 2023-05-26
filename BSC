@@ -1,8 +1,6 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 public class BSC {
     private final int stationID;
@@ -12,9 +10,9 @@ public class BSC {
     public static JButton removeStationButton;
 
     public BSC() {
+        numberOfProcessedMessages = 0;
         stationID = generateUniqueStationID();
         BSCLayersMngr.bscCounter++;
-        numberOfProcessedMessages = 0;
         bscPanel = new JPanel();
         bscPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
         bscPanel.setLayout(new BoxLayout(bscPanel, BoxLayout.Y_AXIS));
@@ -42,5 +40,12 @@ public class BSC {
     public int generateUniqueStationID() {
         nextID++;
         return nextID;
+    }
+    public void increaseNumberOfProcessedMessages() {
+        numberOfProcessedMessages++;
+    }
+
+    public void decreaseNumberOfProcessedMessages() {
+        numberOfProcessedMessages--;
     }
 }
