@@ -4,7 +4,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-
 public class SMSApp extends JFrame implements ActionListener {
 
     private static JPanel sendingPanel;
@@ -22,13 +21,11 @@ public class SMSApp extends JFrame implements ActionListener {
     public static JPanel btsRightLayer;
 
     SMSApp() {
-        // Properties of my main frame
         setSize(1400, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("SMSApp made by Yegor Burykin");
         setLayout(new BorderLayout());
 
-        // My three main panels that will contain everything
         sendingPanel = new JPanel();
         sendingPanel.setLayout(new BorderLayout());
 
@@ -38,13 +35,11 @@ public class SMSApp extends JFrame implements ActionListener {
         middlePanel = new JPanel();
         middlePanel.setLayout(new BorderLayout());
 
-        // Create a panel to hold the BTS and BSC stations
         JPanel stationsPanel = new JPanel();
         LineBorder lineBorder = new LineBorder(Color.DARK_GRAY, 2);
         stationsPanel.setLayout(new BoxLayout(stationsPanel, BoxLayout.X_AXIS));
         stationsPanel.setBorder(lineBorder);
 
-        // Create left and right panels for the BTS stations
         btsLeftLayer = new JPanel();
         btsRightLayer = new JPanel();
         btsLeftLayer.setBorder(lineBorder);
@@ -57,7 +52,6 @@ public class SMSApp extends JFrame implements ActionListener {
         btsLeftLayer.add(btsLeft.getBtsPanel());
         btsRightLayer.add(btsRight.getBtsPanel());
 
-        // Create a panel and a manager for the BSC stations
         bscLayersPanel.setLayout(new BoxLayout(bscLayersPanel, BoxLayout.X_AXIS));
         JPanel bscLayer = new JPanel();
         bscLayer.setBorder(lineBorder);
@@ -69,66 +63,54 @@ public class SMSApp extends JFrame implements ActionListener {
         bscLayersMngr.addBscToLayer(bscLayer, bsc);
         bscLayersPanel.add(bscLayer);
 
-        // Add the BTS and BSC layers to the stationsPanel
         stationsPanel.add(btsLeftLayer, BorderLayout.WEST);
         stationsPanel.add(bscLayersPanel, BorderLayout.CENTER);
         stationsPanel.add(btsRightLayer, BorderLayout.EAST);
 
-        // Create a button for adding BSC layers
         bscAddButton.addActionListener(this);
         bscAddButton.setFocusable(false);
         bscRemoveLayerButton.addActionListener(this);
         bscRemoveLayerButton.setFocusable(false);
         updateRemoveBscButton();
 
-        // Create a panel to hold the buttons
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBorder(lineBorder);
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(bscAddButton);
         buttonPanel.add(bscRemoveLayerButton);
 
-        // Create the JPanel for virtual sending devices (VBD)
         vbdPanel = new JPanel();
         vbdPanel.setLayout(new BoxLayout(vbdPanel, BoxLayout.Y_AXIS));
 
-        // Create the JScrollPane for the VBD panel
         JScrollPane vbdScrollPane = new JScrollPane(vbdPanel);
         vbdScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        // Add the scroll pane to the central part of the sendingPanel
+        sendingPanel.add(vbdPanel, BorderLayout.WEST);
         sendingPanel.add(vbdScrollPane, BorderLayout.CENTER);
 
-        // Create the JPanel for VRD
         vrdPanel = new JPanel();
         vrdPanel.setLayout(new BoxLayout(vrdPanel, BoxLayout.Y_AXIS));
 
-        // Create the JScrollPane for the VRD panel
         JScrollPane vrdScrollPane = new JScrollPane(vrdPanel);
         vrdScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        // Add the scroll pane to the central part of the receivingPanel
+        receivingPanel.add(vrdPanel, BorderLayout.WEST);
         receivingPanel.add(vrdScrollPane, BorderLayout.CENTER);
 
-        // Add the stationsPanel to the middlePanel
         middlePanel.add(stationsPanel, BorderLayout.CENTER);
 
-        // Create the "Add" VBD button
         vbdButton.setFocusable(false);
         vbdButton.setBackground(Color.LIGHT_GRAY);
         vbdButton.addActionListener(this);
 
-        // Create the "Add" VRD button
         vrdButton.setFocusable(false);
         vrdButton.setBackground(Color.LIGHT_GRAY);
         vrdButton.addActionListener(this);
 
-        // Add the button to the bottom of the panels
         middlePanel.add(buttonPanel, BorderLayout.SOUTH);
         sendingPanel.add(vbdButton, BorderLayout.SOUTH);
         receivingPanel.add(vrdButton, BorderLayout.SOUTH);
 
-        // Add the panels to the main frame
         add(sendingPanel, BorderLayout.WEST);
         add(receivingPanel, BorderLayout.EAST);
         add(middlePanel, BorderLayout.CENTER);
@@ -154,21 +136,18 @@ public class SMSApp extends JFrame implements ActionListener {
         }
 
         else if (whenButtonClicked.getSource() == bscAddButton) {
-            // Handle BSC add button click
             BSC bsc = new BSC();
             JPanel bscLayer = new JPanel();
             JPanel bscObjectPanel = bsc.getBscPanel();
             bscLayer.setBorder(new LineBorder(Color.DARK_GRAY, 2));
-            bscLayer.setLayout(new GridLayout(15, 1));
+            bscLayer.setLayout(new GridLayout(18, 1));
             bscLayer.add(bscObjectPanel);
             bscLayersMngr.addBSCLayer(bscLayer);
             bscLayersMngr.addBscToLayer(bscLayer, bsc);
             addBSCLayerRevalidate(bscLayer);
-            System.out.println(bscLayersMngr.getTotalBscCount());
             updateRemoveBscButton();
         }
         else if (whenButtonClicked.getSource() == bscRemoveLayerButton) {
-            // Handle BSC remove button click
             if (bscLayersMngr.getLayersNumber() > 1) {
                 JPanel lastBscLayer = bscLayersMngr.getLastLayer();
                 removePanelRevalidate(bscLayersPanel, lastBscLayer);
@@ -216,7 +195,6 @@ public class SMSApp extends JFrame implements ActionListener {
         layer.add(additionalBSC.getBscPanel());
         bscLayersMngr.addBscToLayer(layer, additionalBSC);
         revalidateRepaintPanel(middlePanel);
-        System.out.println(bscLayersMngr.getTotalBscCount());
         return additionalBSC;
     }
 
