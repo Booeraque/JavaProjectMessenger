@@ -3,10 +3,12 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class VirtualSendingDevice {
-    private final String message;
+    private String message;
     private final String deviceNumber;
     private JPanel vbdObjectPanel;
     private int sliderValue = 1;
@@ -14,18 +16,20 @@ public class VirtualSendingDevice {
     private static int deviceCounter = 1;
     private JComboBox<String> stateComboBox;
     private JSlider frequencySlider;
-    private Thread sendingThread;
+    private List<Thread> sendingThreads;
 
-    public VirtualSendingDevice(String message) {
-        this.message = message;
-        this.deviceNumber = generateDeviceNumber();
-        if (message != null && !message.isEmpty()) {
-            // Creation of a new VBD object after clicking the Add button in the sending panel
+    public VirtualSendingDevice(String msg) {
+        this.message = msg;
+        this.deviceNumber = generateRandomSMSCAddress();
+        this.sendingThreads = new ArrayList<>();
+        if (msg != null && !msg.isEmpty()) {
             vbdObjectPanel = new JPanel();
             vbdObjectPanel.setLayout(new BoxLayout(vbdObjectPanel, BoxLayout.Y_AXIS));
             vbdObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
 
             frequencySlider = new JSlider(JSlider.HORIZONTAL, 1, 60, 1);
+            frequencySlider.setMinorTickSpacing(3);
+            frequencySlider.setPaintTicks(true);
             frequencySlider.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseReleased(MouseEvent e) {
@@ -69,6 +73,7 @@ public class VirtualSendingDevice {
             JButton terminateVBDButton = new JButton("Terminate");
             terminateVBDButton.addActionListener(whenTerminateButtonClicked -> {
                 vbdState = false;
+                stopSendingThread();
                 SMSApp.removeVBDObjectFromPanel(vbdObjectPanel);
             });
             JLabel buttonLabel = new JLabel("Terminate VBD button:");
@@ -87,71 +92,81 @@ public class VirtualSendingDevice {
 
     private void restartSendingThread() {
         stopSendingThread();
-        sendingThread = new Thread(this::startSendingMessages);
-        sendingThread.start();
-    }
+        sendingThreads.clear();
 
-    private void stopSendingThread() {
-        if (sendingThread != null) {
-            sendingThread.interrupt();
-            try {
-                sendingThread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            sendingThread = null;
+        for (int i = 0; i < sliderValue; i++) {
+            final int threadDelay = i;
+            Thread sendingThread = new Thread(() -> {
+                try {
+                    Thread.sleep(60000 / sliderValue * threadDelay);
+                    startSendingMessages();
+                } catch (InterruptedException e) {
+                    System.out.println("A message transmission was interrupted.");
+                    Thread.currentThread().interrupt();
+                }
+            });
+            sendingThreads.add(sendingThread);
+            sendingThread.start();
         }
     }
+
+
+    private void stopSendingThread() {
+        for (Thread thread : sendingThreads) {
+            if (thread != null) {
+                thread.interrupt();
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        sendingThreads.clear();
+    }
+
     private void startSendingMessages() {
         while (vbdState) {
-            for (int i = 0; i < sliderValue; i++) {
-                if (!vbdState) break;
-                // Find a free BTS on the Left BTS layer and pass the message there.
-                BTS freeLeftBTS = BTS.findFreeLeftBTSStation();
-                freeLeftBTS.increaseNumberOfProcessedMessages();
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-                freeLeftBTS.decreaseNumberOfProcessedMessages();
+            BTS freeLeftBTS = BTS.findFreeLeftBTSStation();
+            freeLeftBTS.increaseNumberOfProcessedMessages();
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            freeLeftBTS.decreaseNumberOfProcessedMessages();
 
-                if (!vbdState) return;
+            if (!vbdState) return;
 
-                // Pass the SMS through the BSC layers
-                iterateThroughAllBSCLayers();
+            iterateThroughAllBSCLayers();
 
-                if (!vbdState) return;
+            if (!vbdState) return;
 
-                // Find a free BTS on the Right BTS layer and pass the message there.
-                BTS freeRightBTS = BTS.findFreeRightBTSStation();
-                freeRightBTS.increaseNumberOfProcessedMessages();
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    System.out.println("Thread is interrupted");
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-                freeRightBTS.decreaseNumberOfProcessedMessages();
+            BTS freeRightBTS = BTS.findFreeRightBTSStation();
+            freeRightBTS.increaseNumberOfProcessedMessages();
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                System.out.println("A message transmission was interrupted.");
+                Thread.currentThread().interrupt();
+                return;
+            }
+            freeRightBTS.decreaseNumberOfProcessedMessages();
 
-                if (!vbdState) return;
+            if (!vbdState) return;
 
-                // Pass the SMS to the random VRD
-                try {
-                    VirtualReceivingDevice.chooseRandomVRD().receiveSMS(message);
-                } catch (IndexOutOfBoundsException e) {
-                    System.out.println("The recipient for the " + deviceNumber + " doesn't exist");
-                }
+            try {
+                VirtualReceivingDevice.chooseRandomVRD().receiveSMS(message);
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println("The recipient for the " + deviceNumber + " doesn't exist");
+            }
 
-                try {
-                    Thread.sleep(60000 / sliderValue);
-                } catch (InterruptedException e) {
-                    System.out.println("Thread is interrupted");
-                    Thread.currentThread().interrupt();
-                    return;
-                }
+            try {
+                Thread.sleep(60000 / sliderValue);
+            } catch (InterruptedException e) {
+                System.out.println("A message transmission was interrupted.");
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -162,10 +177,8 @@ public class VirtualSendingDevice {
             BSC bsc = SMSApp.bscLayersMngr.findFreeBSConLayer(i);
             bsc.increaseNumberOfProcessedMessages();
             int delay = generateRandomDelay() * 1000;
-            // Simulate passing through the BSC with a random delay
             try {
                 Thread.sleep(delay);
-                System.out.println("BSC layer number " + (i + 1) + ", with the delay of " + delay / 1000 + " seconds, was passed successfully");
             } catch (InterruptedException e) {
                 System.out.println("You've just stopped transmission of a message");
                 Thread.currentThread().interrupt();
@@ -187,9 +200,14 @@ public class VirtualSendingDevice {
         return deviceNumber;
     }
 
-    private static String generateDeviceNumber() {
-        String generatedNumber = "VBD " + deviceCounter;
-        deviceCounter++;
-        return generatedNumber;
+    private static String generateRandomSMSCAddress() {
+        String[] prefixes = { "+380", "+1", "+375", "+48", "+235" };
+        int prefixIndex = (int) (Math.random() * 5);
+        String address = prefixes[prefixIndex];
+        for (int i = 0; i < 8; i++) {
+            int digit = (int) (Math.random() * 10);
+            address += digit;
+        }
+        return address;
     }
 }
