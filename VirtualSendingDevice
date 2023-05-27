@@ -158,7 +158,7 @@ public class VirtualSendingDevice {
 
             try {
                 VirtualReceivingDevice.chooseRandomVRD().receiveSMS(message);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (NullPointerException e) {
                 System.out.println("The recipient for the " + deviceNumber + " doesn't exist");
             }
 
