@@ -7,21 +7,18 @@ public class BSC {
     private static int nextID = 0;
     public int numberOfProcessedMessages;
     private final JPanel bscPanel;
-    public static JButton removeStationButton;
 
     public BSC() {
         numberOfProcessedMessages = 0;
         stationID = generateUniqueStationID();
-        BSCLayersMngr.bscCounter++;
         bscPanel = new JPanel();
         bscPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
         bscPanel.setLayout(new BoxLayout(bscPanel, BoxLayout.Y_AXIS));
         JLabel stationNumLabel = new JLabel("BCS #" + this.getStationNumber());
-        removeStationButton = new JButton("Terminate");
+        JButton removeStationButton = new JButton("Terminate");
         removeStationButton.setFocusable(false);
         removeStationButton.addActionListener(whenTerminateButtonClicked -> {
             if (SMSApp.bscLayersMngr.getTotalBscCount() > 1) {
-                BSCLayersMngr.bscCounter--;
                 SMSApp.removeBscStationFromPanel(this);
             }
         });
