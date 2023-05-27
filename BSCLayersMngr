@@ -7,16 +7,13 @@ import java.util.Map;
 public class BSCLayersMngr {
     private final Map<JPanel, List<BSC>> layerMap;
     private final List<JPanel> layerList;
-    public static int bscCounter;
 
     public BSCLayersMngr() {
         layerMap = new HashMap<>();
         layerList = new ArrayList<>();
-        bscCounter = 0;
     }
 
     public void addBSCLayer(JPanel layer) {
-        // Create an empty list for the layer if it doesn't exist
         if (!layerMap.containsKey(layer)) {
             layerMap.put(layer, new ArrayList<>());
             layerList.add(layer);
@@ -24,7 +21,6 @@ public class BSCLayersMngr {
     }
 
     public void addBscToLayer(JPanel layer, BSC bsc) {
-        // Add the object to the corresponding layer
         layerMap.get(layer).add(bsc);
     }
 
@@ -49,7 +45,11 @@ public class BSCLayersMngr {
     }
 
     public int getTotalBscCount() {
-        return bscCounter;
+        int totalCount = 0;
+        for (JPanel layer : layerList) {
+            totalCount += layerMap.get(layer).size();
+        }
+        return totalCount;
     }
 
     public JPanel getLayerFromBsc(BSC bsc) {
@@ -60,19 +60,15 @@ public class BSCLayersMngr {
     }
 
     public void removeLayer(JPanel layer) {
-        // Remove the specified layer and its associated BSC objects
         layerMap.remove(layer);
         layerList.remove(layer);
-        for (int i = 0; i < layer.getComponentCount(); i++) bscCounter--;
     }
 
     public void removeBscFromLayer(JPanel layer, BSC bsc) {
-        // Remove the specified BSC object from the layer
         layerMap.get(layer).remove(bsc);
     }
 
     public int getLayersNumber() {
-        // Get the number of layers stored in the layerMap
         return layerList.size();
     }
 
