@@ -3,15 +3,20 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class VirtualReceivingDevice {
 
+    private final String deviceNumber;
     private static final List<VirtualReceivingDevice> vrdList = new ArrayList<>();
     private final List<String> messagesReceivedList;
     private final JPanel vrdObjectPanel;
     private final JLabel receivedMsgs;
+    private boolean checkBoxWork = true;
+
 
     VirtualReceivingDevice() {
+        deviceNumber = generateRandomAddress();
         messagesReceivedList = new ArrayList<>();
         vrdList.add(this);
         vrdObjectPanel = new JPanel();
@@ -22,6 +27,7 @@ public class VirtualReceivingDevice {
         terminateVRDButton.addActionListener(whenTerminateVBDButtonClicked -> {
             SMSApp.removeVRDObjectFromPanel(vrdObjectPanel);
             vrdList.remove(this);
+            checkBoxWork = false;
         });
         JLabel terminateVRDLabel = new JLabel("Terminate VRD button:");
         JPanel terminateVRDPanel = new JPanel(new BorderLayout());
@@ -37,9 +43,9 @@ public class VirtualReceivingDevice {
         JCheckBox msgRemoveCheckBox = new JCheckBox();
         msgRemoveCheckBox.setFocusable(false);
         Thread msgRemoveCheckBoxThread = new Thread(() -> {
-            while (true) {
+            while (checkBoxWork) {
                     try {
-                        Thread.sleep(10000); // Sleep for 10 seconds
+                        Thread.sleep(10000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -63,8 +69,25 @@ public class VirtualReceivingDevice {
     }
 
     public static VirtualReceivingDevice chooseRandomVRD() {
-        int randomVRD = (int)((Math.random() * (vrdList.size())));
-        return vrdList.get(randomVRD);
+        if (vrdList.size() != 0) {
+            int randomVRD = (int) ((Math.random() * (vrdList.size())));
+            return vrdList.get(randomVRD);
+        }
+        return null;
+    }
+
+    public static VirtualReceivingDevice getVRD(String deviceNum) {
+        for (VirtualReceivingDevice vrd : vrdList) {
+            if (deviceNum.equals(vrd.deviceNumber)) return vrd;
+        }
+        return null;
+    }
+
+    public static boolean checkingVRDAddress(String addressInMessage) {
+        for (VirtualReceivingDevice vrd : vrdList) {
+            if(Objects.equals(vrd.getDeviceNumber(), addressInMessage)) return true;
+        }
+        return false;
     }
 
     public int getReceivedMessagesCounter() {
@@ -74,14 +97,30 @@ public class VirtualReceivingDevice {
     public void receiveSMS(String message) {
         messagesReceivedList.add(message);
         updateReceivedMessagesLabel();
-        System.out.println("The message was delivered successfully! \nHere is the message: " + message + "\n=====================");
+        System.out.println(message);
     }
 
     private void updateReceivedMessagesLabel() {
         receivedMsgs.setText(String.valueOf(this.getReceivedMessagesCounter()));
     }
 
+    public String getDeviceNumber() {
+        return deviceNumber;
+    }
+
     public JPanel getVrdObjectPanel() {
         return vrdObjectPanel;
+    }
+
+    static String generateRandomAddress() {
+        String[] prefixes = { "+380", "+1", "+375", "+48", "+235" };
+        int prefixIndex = (int) (Math.random() * prefixes.length);
+
+        String randomAddress = prefixes[prefixIndex];
+        for (int i = 0; i < 8; i++) {
+            int digit = (int) (Math.random() * 10);
+            randomAddress += digit;
+        }
+        return randomAddress;
     }
 }
