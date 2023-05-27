@@ -25,6 +25,7 @@ public class SMSApp extends JFrame implements ActionListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("SMSApp made by Yegor Burykin");
         setLayout(new BorderLayout());
+        setVisible(true);
 
         sendingPanel = new JPanel();
         sendingPanel.setLayout(new BorderLayout());
@@ -85,7 +86,6 @@ public class SMSApp extends JFrame implements ActionListener {
         JScrollPane vbdScrollPane = new JScrollPane(vbdPanel);
         vbdScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        sendingPanel.add(vbdPanel, BorderLayout.WEST);
         sendingPanel.add(vbdScrollPane, BorderLayout.CENTER);
 
         vrdPanel = new JPanel();
@@ -94,8 +94,7 @@ public class SMSApp extends JFrame implements ActionListener {
         JScrollPane vrdScrollPane = new JScrollPane(vrdPanel);
         vrdScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        receivingPanel.add(vrdPanel, BorderLayout.WEST);
-        receivingPanel.add(vrdScrollPane, BorderLayout.CENTER);
+        receivingPanel.add(vrdScrollPane, BorderLayout.CENTER); // Узнать почему ресивинг панель должна так добавлять скроллпейн. по видео лучше а то чатгпт странный
 
         middlePanel.add(stationsPanel, BorderLayout.CENTER);
 
@@ -117,7 +116,7 @@ public class SMSApp extends JFrame implements ActionListener {
     }
 
     public static void main(String[] args) {
-        new SMSApp().setVisible(true);
+        new SMSApp();
     }
 
     @Override
