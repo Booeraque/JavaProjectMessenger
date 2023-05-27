@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 public class BTS {
     private final int stationID;
+    private static int nextID = 0;
     private final boolean btsSide;
-    private static int stationCounter = 0; // zameny na unique ID
     public int numberOfProcessedMessages;
     private final JPanel btsPanel;
     private static final ArrayList<BTS> leftBTSArray = new ArrayList<>();
@@ -45,7 +45,8 @@ public class BTS {
     public static BTS findFreeLeftBTSStation() {
         int minimalNumOfProcessedMsgs = 5;
         int btsInd = 0;
-        for (BTS bts : leftBTSArray) {
+        ArrayList<BTS> leftBTSArrayCopy = new ArrayList<>(leftBTSArray);
+        for (BTS bts : leftBTSArrayCopy) {
             int btsNumOfProcessedMsgs = bts.numberOfProcessedMessages;
             if (btsNumOfProcessedMsgs < minimalNumOfProcessedMsgs) {
                 minimalNumOfProcessedMsgs = btsNumOfProcessedMsgs;
@@ -55,10 +56,12 @@ public class BTS {
         if (minimalNumOfProcessedMsgs != 5) return leftBTSArray.get(btsInd);
         else return SMSApp.createNewLeftBTS();
     }
+
     public static BTS findFreeRightBTSStation() {
         int minimalNumOfProcessedMsgs = 5;
         int btsInd = 0;
-        for (BTS bts : rightBTSArray) {
+        ArrayList<BTS> rightBTSArrayCopy = new ArrayList<>(rightBTSArray);
+        for (BTS bts : rightBTSArrayCopy) {
             int btsNumOfProcessedMsgs = bts.numberOfProcessedMessages;
             if (btsNumOfProcessedMsgs < minimalNumOfProcessedMsgs) {
                 minimalNumOfProcessedMsgs = btsNumOfProcessedMsgs;
@@ -68,6 +71,7 @@ public class BTS {
         if (minimalNumOfProcessedMsgs != 5) return rightBTSArray.get(btsInd);
         else return SMSApp.createNewRightBTS();
     }
+
     public JPanel getBtsPanel() {
         return btsPanel;
     }
@@ -77,8 +81,8 @@ public class BTS {
     }
 
     public int generateUniqueStationID() {
-        stationCounter++;
-        return stationCounter;
+        nextID++;
+        return nextID;
     }
 
     public void increaseNumberOfProcessedMessages() {
