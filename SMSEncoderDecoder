@@ -1,0 +1,115 @@
+
+public class SMSEncoderDecoder {
+    public static final int ADDRESS_LENGTH = 13; // Length of the SMSC address
+    // Method to encode a message
+    public static String encodeMessage(String message, String senderAddress, String recipientAddress) {
+        // Step 1: Encode the message length
+        int messageLength = message.length();
+        String encodedLength = String.format("%02X", messageLength);
+
+        // Step 2: Encode the sender and recipient addresses
+        String encodedSender = encodeAddress(senderAddress);
+        String encodedRecipient = encodeAddress(recipientAddress);
+
+        // Step 3: Encode the message itself
+        String encodedMessage = "";
+        for (char c : message.toCharArray()) {
+            encodedMessage += String.format("%02X", (int) c);
+        }
+
+        return encodedLength + encodedSender + encodedRecipient + encodedMessage;
+    }
+
+    // Helper method to encode an address
+    private static String encodeAddress(String address) {
+        String encodedAddress = "";
+        for (char c : address.toCharArray()) {
+            encodedAddress += String.format("%02X", (int) c);
+        }
+        return encodedAddress;
+    }
+
+    // Method to decode a message
+    public static String decodeMessage(String encodedMessage) {
+        // Step 1: Decode the message length
+        int lengthBytes = 2; // Assuming the message length is always encoded in 2 bytes
+        if (lengthBytes > encodedMessage.length()) {
+            throw new IllegalArgumentException("Invalid encoded message length");
+        }
+        int messageLength = Integer.parseInt(encodedMessage.substring(0, lengthBytes), 16);
+        encodedMessage = encodedMessage.substring(lengthBytes);
+
+        // Step 2: Decode the sender and recipient addresses
+        String decodedSender = decodeAddress(encodedMessage.substring(0, ADDRESS_LENGTH * 2));
+        encodedMessage = encodedMessage.substring(ADDRESS_LENGTH * 2);
+
+        if (encodedMessage.length() < ADDRESS_LENGTH * 2) {
+            throw new IllegalArgumentException("Invalid encoded message format");
+        }
+        String decodedRecipient = getDecodedRecipient(encodedMessage);
+        encodedMessage = encodedMessage.substring(ADDRESS_LENGTH * 2);
+
+        // Step 3: Decode the message itself
+        if (encodedMessage.length() < messageLength * 2) {
+            throw new IllegalArgumentException("Invalid encoded message format");
+        }
+        String decodedMessage = "";
+        for (int i = 0; i < messageLength * 2; i += 2) {
+            String hexByte = encodedMessage.substring(i, i + 2);
+            char c = (char) Integer.parseInt(hexByte, 16);
+            decodedMessage += c;
+        }
+
+        return "Sender: " + decodedSender + "\nRecipient: " + decodedRecipient + "\nMessage: " + decodedMessage;
+    }
+
+    public static String getDecodedRecipient(String encodedMessage) {
+        return decodeAddress(encodedMessage.substring(0, ADDRESS_LENGTH * 2));
+    }
+
+    // Helper method to decode an address
+    private static String decodeAddress(String encodedAddress) {
+        if (encodedAddress.length() % 2 != 0) {
+            throw new IllegalArgumentException("Invalid encoded address format");
+        }
+
+        String decodedAddress = "";
+        for (int i = 0; i < encodedAddress.length(); i += 2) {
+            String hexByte = encodedAddress.substring(i, i + 2);
+            char c = (char) Integer.parseInt(hexByte, 16);
+            decodedAddress += c;
+        }
+
+        return decodedAddress;
+    }
+
+    // Example usage
+    public static void main(String[] args) {
+        String senderAddress = generateSMSCAddress();
+        String recipientAddress = generateSMSCAddress();
+        String originalMessage = "TestMsg";
+
+        // Encode the message
+        String encodedMessage = encodeMessage(originalMessage, senderAddress, recipientAddress);
+        System.out.println("Encoded Message:\n" + encodedMessage);
+
+        // Decode the message
+        String decodedMessage = decodeMessage(encodedMessage);
+        System.out.println("Decoded Message:\n" + decodedMessage);
+    }
+
+    // Method to generate a random SMSC address
+    private static String generateSMSCAddress() {
+        String[] prefixes = {"+380", "+375", "+1", "+240", "+415"};
+        int randomPrefixIndex = (int) (Math.random() * prefixes.length);
+        String prefix = prefixes[randomPrefixIndex];
+
+        StringBuilder addressBuilder = new StringBuilder();
+        for (int i = 0; i < SMSEncoderDecoder.ADDRESS_LENGTH - prefix.length(); i++) {
+            int digit = (int) (Math.random() * 10);
+            addressBuilder.append(digit);
+        }
+
+        return prefix + addressBuilder.toString();
+    }
+}
