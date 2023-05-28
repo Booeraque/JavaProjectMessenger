@@ -16,7 +16,7 @@ public class VirtualReceivingDevice {
 
 
     VirtualReceivingDevice() {
-        deviceNumber = generateRandomAddress();
+        deviceNumber = generateSMSCAddress();
         messagesReceivedList = new ArrayList<>();
         vrdList.add(this);
         vrdObjectPanel = new JPanel();
@@ -68,12 +68,12 @@ public class VirtualReceivingDevice {
         msgRemoveCheckBoxThread.start();
     }
 
-    public static VirtualReceivingDevice chooseRandomVRD() {
+    public static String getRandomVRDDeviceNumber() {
         if (vrdList.size() != 0) {
             int randomVRD = (int) ((Math.random() * (vrdList.size())));
-            return vrdList.get(randomVRD);
+            return vrdList.get(randomVRD).deviceNumber;
         }
-        return null;
+        return generateSMSCAddress();
     }
 
     public static VirtualReceivingDevice getVRD(String deviceNum) {
@@ -97,7 +97,7 @@ public class VirtualReceivingDevice {
     public void receiveSMS(String message) {
         messagesReceivedList.add(message);
         updateReceivedMessagesLabel();
-        System.out.println(message);
+        System.out.println(SMSEncoderDecoder.decodeMessage(message));
     }
 
     private void updateReceivedMessagesLabel() {
@@ -112,15 +112,18 @@ public class VirtualReceivingDevice {
         return vrdObjectPanel;
     }
 
-    static String generateRandomAddress() {
-        String[] prefixes = { "+380", "+1", "+375", "+48", "+235" };
-        int prefixIndex = (int) (Math.random() * prefixes.length);
+    // Method to generate a random SMSC address
+    private static String generateSMSCAddress() {
+        String[] prefixes = {"+380", "+375", "+1", "+240", "+415"};
+        int randomPrefixIndex = (int) (Math.random() * prefixes.length);
+        String prefix = prefixes[randomPrefixIndex];
 
-        String randomAddress = prefixes[prefixIndex];
-        for (int i = 0; i < 8; i++) {
+        StringBuilder addressBuilder = new StringBuilder();
+        for (int i = 0; i < SMSEncoderDecoder.ADDRESS_LENGTH - prefix.length(); i++) {
             int digit = (int) (Math.random() * 10);
-            randomAddress += digit;
+            addressBuilder.append(digit);
         }
-        return randomAddress;
+
+        return prefix + addressBuilder.toString();
     }
 }
