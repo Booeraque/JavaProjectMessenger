@@ -9,14 +9,14 @@ public class SMSApp extends JFrame implements ActionListener {
     private static JPanel sendingPanel;
     private static JPanel receivingPanel;
     private static JPanel middlePanel;
-    private final JButton vbdButton = new JButton("     Add a VBD     ");
-    private final JButton vrdButton = new JButton("     Add a VRD     ");
-    private final JButton bscAddButton = new JButton("   Add a BSC Layer   ");
+    private static final JButton vbdButton = new JButton("     Add a VBD     ");
+    private static final JButton vrdButton = new JButton("     Add a VRD     ");
+    private static final JButton bscAddButton = new JButton("   Add a BSC Layer   ");
     private static final JButton bscRemoveLayerButton = new JButton("   Remove a BSC Layer   ");
     private static JPanel vbdPanel;
     private static JPanel vrdPanel;
     public static BSCLayersMngr bscLayersMngr = new BSCLayersMngr();
-    private static final JPanel bscLayersPanel = new JPanel();
+    private static JPanel bscLayersPanel;
     public static JPanel btsLeftLayer;
     public static JPanel btsRightLayer;
 
@@ -36,43 +36,41 @@ public class SMSApp extends JFrame implements ActionListener {
         middlePanel = new JPanel();
         middlePanel.setLayout(new BorderLayout());
 
+        // BTS and BSC stations panels
         JPanel stationsPanel = new JPanel();
         LineBorder lineBorder = new LineBorder(Color.DARK_GRAY, 2);
         stationsPanel.setLayout(new BoxLayout(stationsPanel, BoxLayout.X_AXIS));
         stationsPanel.setBorder(lineBorder);
-
         btsLeftLayer = new JPanel();
         btsRightLayer = new JPanel();
         btsLeftLayer.setBorder(lineBorder);
         btsRightLayer.setBorder(lineBorder);
-        btsLeftLayer.setLayout(new GridLayout(18, 1));
-        btsRightLayer.setLayout(new GridLayout(18, 1));
-
+        btsLeftLayer.setLayout(new GridLayout(18, 10)); // mb stoit pomenyat' !!!!!!
+        btsRightLayer.setLayout(new GridLayout(18, 10));
         BTS btsLeft = new BTS(true);
         BTS btsRight = new BTS(false);
         btsLeftLayer.add(btsLeft.getBtsPanel());
         btsRightLayer.add(btsRight.getBtsPanel());
-
+        bscLayersPanel = new JPanel();
         bscLayersPanel.setLayout(new BoxLayout(bscLayersPanel, BoxLayout.X_AXIS));
         JPanel bscLayer = new JPanel();
         bscLayer.setBorder(lineBorder);
-        bscLayer.setLayout(new GridLayout(15, 1));
+        bscLayer.setLayout(new GridLayout(18, 10));
         BSC bsc = new BSC();
-
         bscLayer.add(bsc.getBscPanel());
         bscLayersMngr.addBSCLayer(bscLayer);
         bscLayersMngr.addBscToLayer(bscLayer, bsc);
         bscLayersPanel.add(bscLayer);
-
         stationsPanel.add(btsLeftLayer, BorderLayout.WEST);
         stationsPanel.add(bscLayersPanel, BorderLayout.CENTER);
         stationsPanel.add(btsRightLayer, BorderLayout.EAST);
+        middlePanel.add(stationsPanel, BorderLayout.CENTER);
 
         bscAddButton.addActionListener(this);
         bscAddButton.setFocusable(false);
         bscRemoveLayerButton.addActionListener(this);
         bscRemoveLayerButton.setFocusable(false);
-        updateRemoveBscButton();
+
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBorder(lineBorder);
@@ -82,21 +80,17 @@ public class SMSApp extends JFrame implements ActionListener {
 
         vbdPanel = new JPanel();
         vbdPanel.setLayout(new BoxLayout(vbdPanel, BoxLayout.Y_AXIS));
-
         JScrollPane vbdScrollPane = new JScrollPane(vbdPanel);
         vbdScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
         sendingPanel.add(vbdScrollPane, BorderLayout.CENTER);
 
         vrdPanel = new JPanel();
         vrdPanel.setLayout(new BoxLayout(vrdPanel, BoxLayout.Y_AXIS));
-
         JScrollPane vrdScrollPane = new JScrollPane(vrdPanel);
         vrdScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        receivingPanel.add(vrdScrollPane, BorderLayout.CENTER);
+        receivingPanel.add(vrdButton, BorderLayout.SOUTH);
 
-        receivingPanel.add(vrdScrollPane, BorderLayout.CENTER); // Узнать почему ресивинг панель должна так добавлять скроллпейн. по видео лучше а то чатгпт странный
-
-        middlePanel.add(stationsPanel, BorderLayout.CENTER);
 
         vbdButton.setFocusable(false);
         vbdButton.setBackground(Color.LIGHT_GRAY);
@@ -108,7 +102,6 @@ public class SMSApp extends JFrame implements ActionListener {
 
         middlePanel.add(buttonPanel, BorderLayout.SOUTH);
         sendingPanel.add(vbdButton, BorderLayout.SOUTH);
-        receivingPanel.add(vrdButton, BorderLayout.SOUTH);
 
         add(sendingPanel, BorderLayout.WEST);
         add(receivingPanel, BorderLayout.EAST);
@@ -123,9 +116,14 @@ public class SMSApp extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent whenButtonClicked) {
         if (whenButtonClicked.getSource() == vbdButton) {
             String message = JOptionPane.showInputDialog(this, "Enter a short text message:");
-            VirtualSendingDevice vbd = new VirtualSendingDevice(message);
-            vbdPanel.add(vbd.getVbdObjectPanel());
-            revalidateRepaintPanel(sendingPanel);
+            try {
+                VirtualSendingDevice vbd = new VirtualSendingDevice(message);
+                vbdPanel.add(vbd.getVbdObjectPanel());
+                revalidateRepaintPanel(sendingPanel);
+            }
+            catch (NullPointerException e) {
+                System.out.println("You didn't enter a message for the VBD!");
+            }
         }
 
         else if (whenButtonClicked.getSource() == vrdButton) {
