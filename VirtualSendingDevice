@@ -13,16 +13,15 @@ public class VirtualSendingDevice {
     private JPanel vbdObjectPanel;
     private int sliderValue = 1;
     private boolean vbdState = true;
-    private static int deviceCounter = 1;
     private JComboBox<String> stateComboBox;
     private JSlider frequencySlider;
     private List<Thread> sendingThreads;
 
     public VirtualSendingDevice(String msg) {
-        this.message = msg;
-        this.deviceNumber = generateRandomSMSCAddress();
+        this.deviceNumber = generateSMSCAddress();
         this.sendingThreads = new ArrayList<>();
         if (msg != null && !msg.isEmpty()) {
+            this.message = msg;
             vbdObjectPanel = new JPanel();
             vbdObjectPanel.setLayout(new BoxLayout(vbdObjectPanel, BoxLayout.Y_AXIS));
             vbdObjectPanel.setBorder(new LineBorder(Color.DARK_GRAY, 1));
@@ -127,6 +126,8 @@ public class VirtualSendingDevice {
 
     private void startSendingMessages() {
         while (vbdState) {
+            String potentialRecipient = VirtualReceivingDevice.getRandomVRDDeviceNumber();
+            String encodedMessage = SMSEncoderDecoder.encodeMessage(message, deviceNumber, potentialRecipient);
             BTS freeLeftBTS = BTS.findFreeLeftBTSStation();
             freeLeftBTS.increaseNumberOfProcessedMessages();
             try {
@@ -157,7 +158,7 @@ public class VirtualSendingDevice {
             if (!vbdState) return;
 
             try {
-                VirtualReceivingDevice.chooseRandomVRD().receiveSMS(message);
+                VirtualReceivingDevice.getVRD(potentialRecipient).receiveSMS(encodedMessage);
             } catch (NullPointerException e) {
                 System.out.println("The recipient for the " + deviceNumber + " doesn't exist");
             }
@@ -200,14 +201,18 @@ public class VirtualSendingDevice {
         return deviceNumber;
     }
 
-    private static String generateRandomSMSCAddress() {
-        String[] prefixes = { "+380", "+1", "+375", "+48", "+235" };
-        int prefixIndex = (int) (Math.random() * 5);
-        String address = prefixes[prefixIndex];
-        for (int i = 0; i < 8; i++) {
+    // Method to generate a random SMSC address
+    private static String generateSMSCAddress() {
+        String[] prefixes = {"+380", "+375", "+1", "+240", "+415"};
+        int randomPrefixIndex = (int) (Math.random() * prefixes.length);
+        String prefix = prefixes[randomPrefixIndex];
+
+        StringBuilder addressBuilder = new StringBuilder();
+        for (int i = 0; i < SMSEncoderDecoder.ADDRESS_LENGTH - prefix.length(); i++) {
             int digit = (int) (Math.random() * 10);
-            address += digit;
+            addressBuilder.append(digit);
         }
-        return address;
+
+        return prefix + addressBuilder.toString();
     }
 }
